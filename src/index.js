@@ -5,7 +5,8 @@ import { sequelize } from "./database/database.js";
 import "./models/User.js";
 import { User } from "./models/User.js";
 
-// sequelize.sync({ force: true })
+sequelize.sync({ force: true })
+
 const validateCreateUser = [
     body("email")
       .notEmpty()
