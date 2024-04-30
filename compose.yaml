@@ -1,0 +1,38 @@
+services:
+  server:
+    build:
+      context: .
+      target: dev
+    ports:
+      - 8721:8721
+    environment:
+      NODE_ENV: production
+      POSTGRES_HOST: db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: hola123
+      POSTGRES_DB: example
+      POSTGRES_PORT: 5432
+      POSTGRES_SSL: false
+    depends_on:
+      db:
+        condition: service_healthy
+    secrets:
+      - db-password
+    volumes:
+      - ./src:/usr/src/app/src
+  db:
+    image: postgres
+    restart: always
+    user: postgres
+    environment:
+      POSTGRES_DB: example
+      POSTGRES_PASSWORD: hola123
+    ports:
+      - 5432:5432
+    expose:
+      - 5432
+    healthcheck:
+      test: ["CMD", "pg_isready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
