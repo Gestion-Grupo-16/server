@@ -3,7 +3,13 @@ import cors from "cors";
 import { body, validationResult } from "express-validator";
 import { sequelize } from "./database/database.js";
 import "./models/User.js";
+import "./models/Group.js";
+import "./models/GroupMember.js";
+import "./models/associations.js";
+
 import { User } from "./models/User.js";
+import { Group } from "./models/Group.js";
+import { GroupMember } from "./models/GroupMember.js";
 
 sequelize.sync({ force: true })
 
@@ -23,9 +29,9 @@ const validateCreateUser = [
   
 const app = express();
 const port = 8721;
+
 app.use(cors());
 app.use(express.json());
-
 
 
 app.get('/users', async (req, res) => {
