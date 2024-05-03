@@ -16,8 +16,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    secrets:
-      - db-password
     volumes:
       - ./src:/usr/src/app/src
   db:
