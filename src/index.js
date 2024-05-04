@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import { body, validationResult } from "express-validator";
+import { body, param, validationResult } from "express-validator";
 import { sequelize } from "./database/database.js";
 import "./models/User.js";
 import "./models/Group.js";
@@ -33,6 +33,29 @@ const validateCreateUser = [
         .withMessage("Username is required")
         .bail()        
   ];
+
+const validatePatchGroupName = [
+    param("group_id")
+      .notEmpty()
+      .withMessage("Group id is required")
+      .bail()
+      .isInt()
+      .withMessage("Group Id must be an integer")
+      .bail(),
+    body("admin_id")
+      .notEmpty()
+      .withMessage("Admin id is required")
+      .bail()
+      .isInt()
+      .withMessage("Admin Id must be an integer")
+      .bail(),
+    body("new_group_name")
+      .notEmpty()
+      .withMessage("New group name is required")
+      .isAscii()
+      .bail()
+]
+
   
 const app = express();
 const port = 8721;
@@ -43,28 +66,14 @@ app.use(express.json());
 
 app.post('/groups', async (req, res) => {
     
-    const { user_email, name } = req.body;    
+    const { user_id, name } = req.body;    
 
-    const user = await User.findOne({ where: { email: user_email } });
+    const user = await User.findOne({ where: { id: user_id } });
     if (!user) {
         return res.status(404).send({ error: "User not found" });
     }  
-
-    const user_id = user.id
-        
-    // Verifico si el usuario ya tiene un grupo con el mismo nombre
-    const existingGroup = await Group.findOne({
-      where: { name },
-      include: [{
-          model: GroupMember,
-          where: { user_id }
-      }]
-    });
-    if (existingGroup) {
-        return res.status(409).send({ error: "Group with this name already exists for this user" });
-    }
-
-    const group = await Group.create({name});
+    
+    const group = await Group.create({name: name, admin_id: user_id});
     if (!group) {
         return res.status(500).send({ error: "Error while creating group" });
     }
@@ -80,63 +89,35 @@ app.post('/groups', async (req, res) => {
 
 });
 
-app.patch('/groups', async (req, res) => {
+app.patch('/groups/admin/:group_id', async (req, res) => {
+});
+
+app.patch('/groups/names/:group_id', validatePatchGroupName ,async (req, res) => {
   
-    const { user_email, group_name, new_user_email,  new_group_name} = req.body;    
-
-    const user = await User.findOne({ where: { email: user_email } });
-    if (!user) {
-        return res.status(404).send({ error: "User not found" });
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
     }  
-
-    const user_id = user.id
-
-    const group = await Group.findOne({ where: { name: group_name } });
-    if (!user) {
+    const {admin_id, new_group_name} = req.body;
+    const group_id = req.params.group_id;
+    
+    const group_admin_id = await Group.findOne({ where: { id: group_id } });
+    if (!group_admin_id) {
         return res.status(404).send({ error: "Group not found" });
-    }  
-
-    const group_id = group.id
-
-    // Verifico si existe un miembro de grupo con los IDs proporcionados
-    const existingGroupMember = await GroupMember.findOne({ where: { group_id, user_id } });
-    if (!existingGroupMember) {
-        return res.status(404).send({ error: "Group member not found" });
     }
 
-    // Actualizo el nombre del grupo
-    if (new_group_name != null){
-      try {
-        await group.update({ name: new_group_name });
-        return res.status(200).send({ message: "Group name updated successfully" });
-      } catch (error) {
-          return res.status(500).send({ error: "Failed to update group name" });
-      }
+    if (group_admin_id.admin_id != admin_id){
+        return res.status(403).send({ error: "You are not the admin of this group" });
+    }
+    
+    try {
+      await Group.update({name: new_group_name}, {where: {id: group_id}})
+    }
+    catch (e) {
+      return res.status(500).send({ error: "Error while updating group name" });
     }
 
-    if (new_user_email != null){
-
-      const new_member = await User.findOne({ where: { email: new_user_email } });
-      if (!new_member) {
-          return res.status(404).send({ error: "User not found" });
-      }  
-      const new_member_id = new_member.id
-
-      const newGroupMember = await GroupMember.findOne({ where: { group_id, user_id : new_member_id } });
-      if (newGroupMember) {
-          return res.status(404).send({ error: "Group member already exists" });
-      }
-      else{
-        const group_member = await GroupMember.create({group_id, user_id: new_member_id});
-        if (!group_member) {
-            return res.status(500).send({ error: "Error while creating group member" });
-        }
-        else{
-          return res.status(200).send({ message: "Group member added successfully" });
-        }
-      }
-      // res.status(201).send({ message: "Group successfully created" });
-    }
+    return res.status(200).send({ message: "Group name updated successfully" });
 });
 
 app.post('/users',validateCreateUser , async (req,res) => {
