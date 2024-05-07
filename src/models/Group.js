@@ -13,7 +13,10 @@ export const Group = sequelize.define(
       type: DataTypes.STRING,
       unique: false,
     },
-    //TODO add description
+    description: {
+      type: DataTypes.STRING,
+      unique: false,
+    },
     admin_id: { 
       type:DataTypes.STRING,
       unique: false,

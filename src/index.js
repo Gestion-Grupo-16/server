@@ -56,6 +56,16 @@ const validatePatchGroupName = [
       .bail()
 ]
 
+const validateGetGroupsOfUser = [
+    param("user_id")
+      .notEmpty()
+      .withMessage("User id is required")
+      .bail()
+      .isInt()
+      .withMessage("User Id must be an integer")
+      .bail()
+]
+
   
 const app = express();
 const port = 8721;
@@ -68,12 +78,14 @@ app.post('/groups', async (req, res) => {
     
     const { user_id, name } = req.body;    
 
+    const description = req.body.description || 'Group ${name}';
+
     const user = await User.findOne({ where: { id: user_id } });
     if (!user) {
         return res.status(404).send({ error: "User not found" });
     }  
     
-    const group = await Group.create({name: name, admin_id: user_id});
+    const group = await Group.create({name: name, admin_id: user_id, description: description});
     if (!group) {
         return res.status(500).send({ error: "Error while creating group" });
     }
@@ -118,6 +130,29 @@ app.patch('/groups/names/:group_id', validatePatchGroupName ,async (req, res) =>
     }
 
     return res.status(200).send({ message: "Group name updated successfully" });
+});
+
+app.get('/groups/member/:user_id', validateGetGroupsOfUser , async (req, res) => {
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const user_id = req.params.user_id;
+    const user_groups = await GroupMember.findAll({ where: { user_id } });
+    
+    if (!user_groups) {
+      return res.status(404).send({ error: "User has no groups" });
+    }
+
+    const groups_info_promises = user_groups.map(group => {
+      return Group.findOne({ where: { id: group.group_id } });
+    });
+
+    const groups_info = await Promise.all(groups_info_promises);
+
+    return res.status(200).json(groups_info);
 });
 
 app.post('/users',validateCreateUser , async (req,res) => {
