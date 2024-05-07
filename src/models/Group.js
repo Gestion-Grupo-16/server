@@ -13,8 +13,9 @@ export const Group = sequelize.define(
       type: DataTypes.STRING,
       unique: false,
     },
+    //TODO add description
     admin_id: { 
-      type:DataTypes.INTEGER,
+      type:DataTypes.STRING,
       unique: false,
       foreignKey: true,
     }

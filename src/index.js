@@ -11,15 +11,15 @@ import { User } from "./models/User.js";
 import { Group } from "./models/Group.js";
 import { GroupMember } from "./models/GroupMember.js";
 
-// sequelize.sync({ force: true })
+sequelize.sync({ force: true })
 
 const validateCreateUser = [
     body("id")
       .notEmpty()
       .withMessage("Id is required")
       .bail()
-      .isInt()
-      .withMessage("Id must be an integer")
+      .isString()
+      .withMessage("Id must be an String")
       .bail(),
     body("email")
       .notEmpty()
@@ -46,7 +46,7 @@ const validatePatchGroupName = [
       .notEmpty()
       .withMessage("Admin id is required")
       .bail()
-      .isInt()
+      .isString()
       .withMessage("Admin Id must be an integer")
       .bail(),
     body("new_group_name")
@@ -91,7 +91,7 @@ app.post('/groups', async (req, res) => {
 
 app.patch('/groups/admin/:group_id', async (req, res) => {
 });
-
+// Todo send all the data, not only group name.
 app.patch('/groups/names/:group_id', validatePatchGroupName ,async (req, res) => {
   
     const errors = validationResult(req);

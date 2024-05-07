@@ -11,7 +11,7 @@ export const GroupMember = sequelize.define(
       foreignKey: true,
     },
     user_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.STRING,
       primaryKey: true,
       foreignKey: true,
       unique: false,
