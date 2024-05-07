@@ -66,6 +66,16 @@ const validateGetGroupsOfUser = [
       .bail()
 ]
 
+const validateGetGroupMembers = [
+    param("group_id")
+      .notEmpty()
+      .withMessage("Group id is required")
+      .bail()
+      .isInt()
+      .withMessage("Group Id must be an integer")
+      .bail()
+]
+
   
 const app = express();
 const port = 8721;
@@ -153,6 +163,29 @@ app.get('/groups/member/:user_id', validateGetGroupsOfUser , async (req, res) =>
     const groups_info = await Promise.all(groups_info_promises);
 
     return res.status(200).json(groups_info);
+});
+
+app.get('/group-members/:group_id', validateGetGroupMembers, async (req, res) => {
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const group_id = req.params.group_id;
+    const group_members = await GroupMember.findAll({ where: { group_id } });
+    
+    if (!group_members) {
+      return res.status(404).send({ error: "Group has no members" });
+    }
+
+    const members_info_promises = group_members.map(member => {
+      return User.findOne({ where: { id: member.user_id } });
+    });
+
+    const members_info = await Promise.all(members_info_promises);
+
+    return res.status(200).json(members_info);
 });
 
 app.post('/users',validateCreateUser , async (req,res) => {
