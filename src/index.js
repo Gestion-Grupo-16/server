@@ -11,7 +11,7 @@ import { User } from "./models/User.js";
 import { Group } from "./models/Group.js";
 import { GroupMember } from "./models/GroupMember.js";
 
-sequelize.sync({ force: true })
+//sequelize.sync({ force: true })
 
 const validateCreateUser = [
     body("id")
@@ -60,9 +60,6 @@ const validateGetGroupsOfUser = [
     param("user_id")
       .notEmpty()
       .withMessage("User id is required")
-      .bail()
-      .isInt()
-      .withMessage("User Id must be an integer")
       .bail()
 ]
 
