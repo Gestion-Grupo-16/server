@@ -33,6 +33,25 @@ const validateCreateUser = [
         .withMessage("Username is required")
         .bail()        
   ];
+const validatePatchGroupDescription = [
+  param("group_id")
+  .notEmpty()
+  .withMessage("Group id is required")
+  .bail()
+  .isInt()
+  .withMessage("Group Id must be an integer")
+  .bail(),
+  body("admin_id")
+    .notEmpty()
+    .withMessage("Admin id is required")
+    .bail(),
+  body("new_group_description")
+    .notEmpty()
+    .withMessage("New group description is required")
+    .isAscii()
+    .bail()
+]
+
 
 const validatePatchGroupName = [
     param("group_id")
@@ -45,9 +64,6 @@ const validatePatchGroupName = [
     body("admin_id")
       .notEmpty()
       .withMessage("Admin id is required")
-      .bail()
-      .isString()
-      .withMessage("Admin Id must be an integer")
       .bail(),
     body("new_group_name")
       .notEmpty()
@@ -108,19 +124,24 @@ app.post('/groups', async (req, res) => {
 
 });
 
-app.patch('/groups/admin/:group_id', async (req, res) => {
-});
-// Todo send all the data, not only group name.
-app.patch('/groups/names/:group_id', validatePatchGroupName ,async (req, res) => {
-  
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+
+// app.patch('/groups/:group_id', validatePatchGroupName, validatePatchGroupDescription ,async (req, res) => {
+app.patch('/groups/:group_id' ,async (req, res) => {
+
+    const { user_id,admin_id, id, name, description} = req.body;    
+
+
+    const user = await User.findOne({ where: { id: user_id } });
+    if (!user) {
+        return res.status(404).send({ error: "User not found" });
     }  
-    const {admin_id, new_group_name} = req.body;
-    const group_id = req.params.group_id;
-    
-    const group_admin_id = await Group.findOne({ where: { id: group_id } });
+  
+    // const errors = validationResult(req);
+    // if (!errors.isEmpty()) {
+    //   return res.status(400).json({ errors: errors.array() });
+    // }  
+
+    const group_admin_id = await Group.findOne({ where: { id: id } });
     if (!group_admin_id) {
         return res.status(404).send({ error: "Group not found" });
     }
@@ -130,13 +151,18 @@ app.patch('/groups/names/:group_id', validatePatchGroupName ,async (req, res) =>
     }
     
     try {
-      await Group.update({name: new_group_name}, {where: {id: group_id}})
+      console.log("updating with id, name and description", id, name, description);
+      await Group.update(
+        {
+          name: name,
+          description: description
+        }, {where: {id: id}})
+      return res.status(200).send({ message: "Group updated successfully" });
     }
     catch (e) {
-      return res.status(500).send({ error: "Error while updating group name" });
-    }
+      return res.status(500).send({ error: "Error while updating group" });
+    } 
 
-    return res.status(200).send({ message: "Group name updated successfully" });
 });
 
 app.get('/groups/member/:user_id', validateGetGroupsOfUser , async (req, res) => {
