@@ -33,6 +33,18 @@ const validateCreateUser = [
         .withMessage("Username is required")
         .bail()        
   ];
+
+
+const validateGetUser = [
+    body("user_id")
+      .notEmpty()
+      .withMessage("Id is required")
+      .bail()
+      .isString()
+      .withMessage("Id must be an String")
+      .bail()  
+  ];
+
 const validatePatchGroupDescription = [
   param("group_id")
   .notEmpty()
@@ -287,6 +299,22 @@ app.patch('/users', async (req, res) => {
   }
 });
 
+
+app.get('/users/:user_id',validateGetUser, async (req, res) => {
+  // const errors = validationResult(req);
+  // if (!errors.isEmpty()) {
+  //   return res.status(400).json({ errors: errors.array() });
+  // }
+
+  const user_id = req.params.user_id;
+  const user = await User.findOne({ where: { id: user_id } });
+
+  if (!user) {
+    return res.status(404).send({ error: "User not found" });
+  }
+
+  return res.status(200).json(user);
+});
 
 
 app.listen(port, () => {
