@@ -1,85 +1,55 @@
-# Maestro Splitter API
+<p align="center">
+  <img src="logo.jpeg" alt="Logo Title Text" width="100" style="border-radius: 50%;"/>
+  <h1 align="center">Maestro Splitter API</h1>
+</p>
 
-API para la aplicacion Maestro Splitter.
+Backend URL
 
-
-URL
 ```
 https://server-y9uq.onrender.com
 ```
 
 ## Endpoints
 
-### Crear usuario
+### Users (/users)
 
-POST /users
+- **POST** /
 
-Body
+  - Crea un nuevo usuario
+  - Body: { id: string , email: string, username: string }
 
-```
-{
-    "id": 1,
-    "email": "usuario@example.com",
-    "username": "usuario"
-}
-```
+- **PATCH** /
 
-Ejemplo con curl
+  - Actualiza el nombre de usuario
+  - Body: { user_id: string, new_username: string }
 
-```
-curl -X POST -H "Content-Type: application/json" -d '{"id": 1, "email": "usuario@example.com", "username": "usuario"}' http://localhost:8721/users
-```
+- **GET** /:user_id
+  - Obtiene la información de un usuario
+  - Params: user_id
 
----
+### Groups (/groups)
 
-### Crear grupo
+- **POST** /
 
-POST /groups
+  - Crea un nuevo grupo
+  - Body: { user_id: string, name: string, description: string }
+  - Optional: description
 
-body:
+- **GET** /members/:group_id
 
-```
-{
-    "user_id": 1,
-    "name": "Nuevo grupo"
-}
+  - Obtiene a los integrantes de un grupo
+  - Params: group_id
 
-```
+- **GET** /member/:user_id
 
-Ejemplo con curl
+  - Obtiene los grupos de un usuario
+  - Params: user_id
 
-```
-curl -X POST -H "Content-Type: application/json" -d '{"user_id": 1, "name": "Nuevo grupo"}' http://localhost:8721/groups
-```
-
----
-
-### Actualizar nombre de grupo
-
-PATCH /groups/names/:group_id
-
-Params
-
-```
-    group_id: id del grupo (entero)
-```
-
-Body
-
-```
-{
-    "admin_id": 1,
-    "new_group_name": "Nuevo nombre"
-}
-```
-
-Ejemplo con curl
-
-```
-curl -X PATCH -H "Content-Type: application/json" -d '{"admin_id": 1, "new_group_name": "Nuevo nombre"}' http://localhost:3000/groups/names/1
-```
-
----
+- **PATCH** /:group_id
+  - Actualiza el nombre y la descripción de un grupo
+  - Params: group_id
+  - Body: {admin_id, new_name, new_description}
+  - Optional: new_description, new_name
 
 ## Ejecución
 
