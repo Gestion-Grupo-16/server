@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="logo.jpeg" alt="Logo Title Text" width="100" style="border-radius: 50%;"/>
+  <img src="logo2.png" alt="Logo Title Text" width="100" />
   <h1 align="center">Maestro Splitter API</h1>
 </p>
 
