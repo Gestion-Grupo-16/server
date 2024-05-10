@@ -1,7 +1,4 @@
-<p align="center">
-  <img src="logo2.png" alt="Logo Title Text" width="100" />
-  <h1 align="center">Maestro Splitter API</h1>
-</p>
+![Cover Image](portada-splitter.png)
 
 Backend URL
 
