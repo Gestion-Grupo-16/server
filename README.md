@@ -32,6 +32,11 @@ https://server-y9uq.onrender.com
   - Body: { user_id: string, name: string, description: string }
   - Optional: description
 
+- **POST** /:group_id/:user_id
+
+  - Agrega un usuario a un grupo ya existente
+  - Params: user_id, group_id
+
 - **GET** /members/:group_id
 
   - Obtiene a los integrantes de un grupo
@@ -47,6 +52,10 @@ https://server-y9uq.onrender.com
   - Params: group_id
   - Body: {admin_id, new_name, new_description}
   - Optional: new_description, new_name
+
+- **DELETE** :group_id/:user_id
+  - Elimina a un usuario de un grupo
+  - Params: group_id, user_id
 
 ## Ejecución
 

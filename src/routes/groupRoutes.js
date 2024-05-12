@@ -45,6 +45,23 @@ const validateCreateGroup = [
     .bail()
 ];
 
+const validateGroupMemberOperation = [
+  param('user_id')
+      .notEmpty()
+      .withMessage('User id is required')
+      .bail()
+      .isInt()
+      .withMessage('User id must be an integer')
+      .bail(),
+  param('group_id')
+      .notEmpty()
+      .withMessage('Group id is required')
+      .bail()
+      .isInt()
+      .withMessage('Group id must be an integer')
+      .bail()
+];
+
 groupRoutes.post('/',validateCreateGroup , async (req, res) => {
     
     const errors = validationResult(req);
@@ -73,9 +90,64 @@ groupRoutes.post('/',validateCreateGroup , async (req, res) => {
 
     res.status(201).send({ message: "Group successfully created" });
     // res.status(201).send({group_id, name})
-
-
 });
+
+groupRoutes.post('/:group_id/:user_id', validateGroupMemberOperation, async (req, res) => {
+  const errors = validationResult(req)
+
+  if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() })
+  }
+
+  const { user_id, group_id } = req.params
+
+  const validUser = await User.findOne({ where: { id: user_id } })
+  if (!validUser) {
+      return res.status(400).json({ errors: [{ msg: 'User does not exist' }] })
+  }
+
+  const validGroup = await Group.findOne({ where: { id: group_id } })
+  if (!validGroup) {
+      return res.status(400).json({ errors: [{ msg: 'Group does not exist' }] })
+  }
+
+  const existingGroupMember = await GroupMember.findOne({ where: { user_id, group_id } })
+  if (existingGroupMember) {
+      return res.status(400).json({ errors: [{ msg: 'User is already a member of the group'}]})
+  }
+
+  const groupMember = await GroupMember.create({ user_id, group_id })
+  if (!groupMember) {
+      return res.status(500).json({ errors: [{ msg: 'Failed to add user to group' }] })
+  }
+
+  return res.status(201).json(groupMember)
+})
+
+groupRoutes.delete('/:group_id/:user_id', validateGroupMemberOperation, async (req, res) => {
+  const { user_id, group_id } = req.params
+
+  const validGroup = await Group.findOne({ where: { id: group_id } })
+  if (!validGroup) {
+      return res.status(400).json({ errors: [{ msg: 'Group does not exist' }] })
+  }
+
+  if (validGroup.admin_id == user_id) {
+      return res.status(403).json({ errors: [{ msg: 'Group admin cannot leave the group' }] })
+  }
+  
+  const groupMember = await GroupMember.findOne({ where: { user_id, group_id } })
+  if (!groupMember) {
+      return res.status(404).json({ errors: [{ msg: 'Group member not found' }] })
+  }
+
+  const deletedGroupMember = await groupMember.destroy()
+  if (!deletedGroupMember) {
+      return res.status(500).json({ errors: [{ msg: 'Failed to delete group member' }] })
+  }
+
+  return res.status(200).send({ message: 'Group member deleted'})
+})
 
 // groupRoutes.patch('/groups/:group_id', validatePatchGroupName, validatePatchGroupDescription ,async (req, res) => {
 groupRoutes.patch('/:group_id', validatePatchGroup,async (req, res) => {
