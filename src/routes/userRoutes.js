@@ -169,4 +169,24 @@ userRoutes.get('/identification/:user_identification', validateGetIdentification
 
 
 
+userRoutes.delete('/:users/:user_id', async (req, res) => {
+  const { user_id } = req.params
+  
+  try{
+    await User.findOne({ where: { id:user_id } });
+  }
+  catch{
+    return res.status(409).send({ error: "User not found" });
+  }
+
+  // Hay que borrar todos los Group Members que tiene del grupo
+
+  // Buscar si el usuario es admin de algun grupo y si lo es asignar al azar un nuevo admin
+
+  // Si es el último integrante del grupo, hay que eliminar también el grupo
+
+  //return res.status(200).send({ message: 'User deleted'})
+})
+
+
 export  default userRoutes;
