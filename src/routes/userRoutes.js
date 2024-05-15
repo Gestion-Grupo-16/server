@@ -1,6 +1,7 @@
 import express from "express";
 import { body, param, validationResult } from "express-validator";
 import { User } from "../models/User.js";
+import { Op } from "sequelize";
 
 const userRoutes = express.Router();
 
@@ -53,6 +54,16 @@ param("user_id")
     .withMessage("Id must be an String")
     .bail()  
 ];
+
+const validateGetIdentification =[
+param("user_identification")
+    .notEmpty()
+    .withMessage("Identification is required")
+    .bail()
+    .isString()
+    .withMessage("Identification must be an String")
+    .bail()  
+]
 
 
 userRoutes.post('/',validateCreateUser , async (req,res) => {
@@ -130,6 +141,31 @@ userRoutes.get('/:user_id',validateGetUser, async (req, res) => {
   return res.status(200).json(user);
 });
 
+
+
+userRoutes.get('/identification/:user_identification', validateGetIdentification, async (req, res) => {
+  console.log("GET /users/identification/:user_identification");
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  const user_identification = req.params.user_identification;
+  const users = await User.findAll({
+    where: {
+      [Op.or]: [
+        { username: { [Op.like]: `%${user_identification}%` } },
+        { email:{ [Op.like]: `%${user_identification}%` } }
+      ]
+    }
+  });
+
+  if (!users || users.length === 0) {
+    return res.status(404).send({ error: "User not found" });
+  }
+
+  return res.status(200).json(users);
+});
 
 
 

@@ -24,6 +24,12 @@ https://server-y9uq.onrender.com
   - Obtiene la información de un usuario
   - Params: user_id
 
+- **GET** /
+  - Obtiene la información de usuarios que contienen userIndentification como username o email
+  - Body: { user_identification: String }: 
+
+-
+
 ### Groups (/groups)
 
 - **POST** /

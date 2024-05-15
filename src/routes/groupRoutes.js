@@ -50,7 +50,7 @@ const validateGroupMemberOperation = [
       .notEmpty()
       .withMessage('User id is required')
       .bail()
-      .isInt()
+      .isString()
       .withMessage('User id must be an integer')
       .bail(),
   param('group_id')
@@ -126,7 +126,7 @@ groupRoutes.post('/:group_id/:user_id', validateGroupMemberOperation, async (req
 
 groupRoutes.delete('/:group_id/:user_id', validateGroupMemberOperation, async (req, res) => {
   const { user_id, group_id } = req.params
-
+ 
   const validGroup = await Group.findOne({ where: { id: group_id } })
   if (!validGroup) {
       return res.status(400).json({ errors: [{ msg: 'Group does not exist' }] })
@@ -151,7 +151,9 @@ groupRoutes.delete('/:group_id/:user_id', validateGroupMemberOperation, async (r
 
 // groupRoutes.patch('/groups/:group_id', validatePatchGroupName, validatePatchGroupDescription ,async (req, res) => {
 groupRoutes.patch('/:group_id', validatePatchGroup,async (req, res) => {
-
+    console.log("PATCH res.body", req.body)
+    console.log("PATCH res.params", req.params)
+    console.log("PATCH res.body", req.query)
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
