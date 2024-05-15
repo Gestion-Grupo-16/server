@@ -28,7 +28,6 @@ https://server-y9uq.onrender.com
   - Obtiene la información de usuarios que contienen userIndentification como username o email
   - Body: { user_identification: String }: 
 
--
 
 ### Groups (/groups)
 
@@ -53,11 +52,17 @@ https://server-y9uq.onrender.com
   - Obtiene los grupos de un usuario
   - Params: user_id
 
+
 - **PATCH** /:group_id
   - Actualiza el nombre y la descripción de un grupo
   - Params: group_id
   - Body: {admin_id, new_name, new_description}
   - Optional: new_description, new_name
+
+- **PATCH** /:group_id/:user_id
+  - Modifica el admin del grupo
+  - Params: group_id, user_id
+  - Body: {new_admin_id}
 
 - **DELETE** :group_id/:user_id
   - Elimina a un usuario de un grupo

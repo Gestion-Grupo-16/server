@@ -19,6 +19,21 @@ const validatePatchGroup = [
         .withMessage("Admin id is required")
         .bail()    
 ]
+
+const validatePatchAdminGroup = [
+    param("group_id")
+        .notEmpty()
+        .withMessage("Group id is required")
+        .bail()
+        .isInt()
+        .withMessage("Group Id must be an integer")
+        .bail(),
+    param("user_id")
+        .notEmpty()
+        .withMessage("User id is required")
+        .bail()    
+]
+
 const validateGetGroupsOfUser = [
     param("user_id")
     .notEmpty()
@@ -189,6 +204,57 @@ groupRoutes.patch('/:group_id', validatePatchGroup,async (req, res) => {
     } 
 
 });
+
+// Change the admin of the group
+groupRoutes.patch('/admins/:group_id/:user_id', validatePatchAdminGroup,async (req, res) => {
+    console.log("PATCH res.body", req.body)
+    console.log("PATCH res.params", req.params)
+    console.log("PATCH res.body", req.query)
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }  
+
+    const {new_admin_id} = req.body;    
+    const group_id = req.params.group_id;
+    const user_id = req.params.user_id;
+
+    const group = await Group.findOne({ where: { id: group_id } });
+    
+    if (!group) {
+        return res.status(404).send({ error: "Group not found" });
+    }
+
+    if (group.admin_id != user_id){
+        return res.status(403).send({ error: "You are not the admin of this group" });
+    }
+
+    try {
+        await User.findOne({ where: { id: new_admin_id } })
+    }
+    catch{
+        return res.status(400).json({ errors: [{ msg: 'New admin does not exist' }] })
+    }
+
+    try{
+        await GroupMember.findOne({ where: { new_admin_id, group_id } })
+    }
+    catch{
+        return res.status(404).json({ errors: [{ msg: 'New admin does not belongs to this group' }] })
+    }
+
+    group.admin_id = new_admin_id;
+    
+    try {
+      await group.save();
+      return res.status(200).send({ message: "Group updated successfully" });
+    }
+    catch (e) {
+      return res.status(500).send({ error: "Error while updating group" });
+    } 
+
+});
+
 
 groupRoutes.get('/member/:user_id', validateGetGroupsOfUser , async (req, res) => {
     const errors = validationResult(req);
