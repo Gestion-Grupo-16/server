@@ -306,10 +306,26 @@ groupRoutes.get('/member/:user_id', validateGetGroupsOfUser , async (req, res) =
     }
 
     const groups_info_promises = user_groups.map(group => {
-      return Group.findOne({ where: { id: group.group_id } });
-    });
+        return Group.findOne({ where: { id: group.group_id },
+          include: [{
+              model: GroupMember,
+              as: 'group_members',
+              where: { user_id },
+              attributes: ['pending'] // Only select 'pending'
+          }] })
+          .then(group => {
+            // Destructure the group object to separate group_members from the rest
+            const { group_members, ...groupProps } = group.get();
+            // Return a new object with the group properties and the 'pending' property
+            return { ...groupProps, pending: group_members[0].pending };
+          });
+      });
 
     const groups_info = await Promise.all(groups_info_promises);
+
+    if(!groups_info){
+        return res.status(404).send({ error: "User has no groups" });
+    }
 
     return res.status(200).json(groups_info);
 });
