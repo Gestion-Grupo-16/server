@@ -217,7 +217,7 @@ groupRoutes.patch('/:group_id', validatePatchGroup,async (req, res) => {
     if (!group) {
         return res.status(404).send({ error: "Group not found" });
     }
-
+    
     if (group.admin_id != admin_id){
         return res.status(403).send({ error: "You are not the admin of this group" });
     }
@@ -272,7 +272,7 @@ groupRoutes.patch('/admins/:group_id/:user_id', validatePatchAdminGroup,async (r
     }
 
     try{
-        await GroupMember.findOne({ where: { new_admin_id, group_id } })
+        await GroupMember.findOne({ where: { user_id: new_admin_id,group_id: group_id } })
     }
     catch{
         return res.status(404).json({ errors: [{ msg: 'New admin does not belongs to this group' }] })
