@@ -162,7 +162,7 @@ userRoutes.get('/identification/:user_identification', validateGetIdentification
   });
 
   if (!users || users.length === 0) {
-    return res.status(404).send({ error: "User not found" });
+    return res.status(404).send([{ error: "User not found" }]);
   }
 
   return res.status(200).json(users);
