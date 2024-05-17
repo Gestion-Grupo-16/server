@@ -81,6 +81,7 @@ userRoutes.post('/',validateCreateUser , async (req,res) => {
     
     const userExists = await User.findOne({ where: { username } });
 
+    // TODO: los nombre si se pueden repetir
     if (userExists) {
       return res.status(409).send({ error: "Username already exists" });
     }

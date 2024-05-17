@@ -16,6 +16,10 @@ export const GroupMember = sequelize.define(
       foreignKey: true,
       unique: false,
     },
+    pending:{
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
+    }
   },
   { timestamps: false },
 );

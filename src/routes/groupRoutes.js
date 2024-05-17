@@ -6,6 +6,7 @@ import { GroupMember } from "../models/GroupMember.js";
 
 const groupRoutes = express.Router();
 
+
 const validatePatchGroup = [
     param("group_id")
         .notEmpty()
@@ -98,7 +99,7 @@ groupRoutes.post('/',validateCreateGroup , async (req, res) => {
         return res.status(500).send({ error: "Error while creating group" });
     }
 
-    const group_member= await GroupMember.create({group_id: group.id, user_id});
+    const group_member= await GroupMember.create({group_id: group.id, user_id, pending:false});
     if (!group_member) {
         return res.status(500).send({ error: "Error while creating group member" });
     }
@@ -107,61 +108,95 @@ groupRoutes.post('/',validateCreateGroup , async (req, res) => {
     // res.status(201).send({group_id, name})
 });
 
-groupRoutes.post('/:group_id/:user_id', validateGroupMemberOperation, async (req, res) => {
-  const errors = validationResult(req)
+groupRoutes.post('/members/:group_id/:user_id', validateGroupMemberOperation, async (req, res) => {
+    const errors = validationResult(req)
 
-  if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() })
-  }
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() })
+    }
 
-  const { user_id, group_id } = req.params
+    const { user_id, group_id } = req.params
 
-  const validUser = await User.findOne({ where: { id: user_id } })
-  if (!validUser) {
-      return res.status(400).json({ errors: [{ msg: 'User does not exist' }] })
-  }
+    const validUser = await User.findOne({ where: { id: user_id } })
+    if (!validUser) {
+        return res.status(400).json({ errors: [{ msg: 'User does not exist' }] })
+    }
 
-  const validGroup = await Group.findOne({ where: { id: group_id } })
-  if (!validGroup) {
-      return res.status(400).json({ errors: [{ msg: 'Group does not exist' }] })
-  }
+    const validGroup = await Group.findOne({ where: { id: group_id } })
+    if (!validGroup) {
+        return res.status(400).json({ errors: [{ msg: 'Group does not exist' }] })
+    }
 
-  const existingGroupMember = await GroupMember.findOne({ where: { user_id, group_id } })
-  if (existingGroupMember) {
-      return res.status(400).json({ errors: [{ msg: 'User is already a member of the group'}]})
-  }
+    const existingGroupMember = await GroupMember.findOne({ where: { user_id, group_id } })
+    if (existingGroupMember) {
+        return res.status(400).json({ errors: [{ msg: 'User is already a member of the group'}]})
+    }
 
-  const groupMember = await GroupMember.create({ user_id, group_id })
-  if (!groupMember) {
-      return res.status(500).json({ errors: [{ msg: 'Failed to add user to group' }] })
-  }
+    const groupMember = await GroupMember.create({ user_id, group_id })
+    if (!groupMember) {
+        return res.status(500).json({ errors: [{ msg: 'Failed to add user to group' }] })
+    }
 
-  return res.status(201).json(groupMember)
+    return res.status(201).json(groupMember)
 })
 
+groupRoutes.patch('/members/:group_id/:user_id', validatePatchAdminGroup, async (req, res) => {
+    
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() })
+    }
+    const { user_id, group_id } = req.params
+    
+    const validGroup = await Group.findOne({ where: { id: group_id } })
+    if (!validGroup) {
+        return res.status(400).json({ errors: [{ msg: 'Group does not exist' }] })
+    }
+
+    const groupMember = await GroupMember.findOne({where: {group_id:group_id, user_id:user_id, pending:true}})
+
+    if(!groupMember){
+        return res.status(400).json({ errors: [{ msg: 'No invitation for this group' }] })
+    }
+
+    groupMember.pending = false;
+    try{
+        await groupMember.save();
+        return res.status(200).send({ message: "Invitation accepted" });
+    }catch(e) {
+        return res.status(500).send({ message: "Couldn save groupmember" });
+    }
+
+
+
+    
+});
+
+
+
 groupRoutes.delete('/:group_id/:user_id', validateGroupMemberOperation, async (req, res) => {
-  const { user_id, group_id } = req.params
- 
-  const validGroup = await Group.findOne({ where: { id: group_id } })
-  if (!validGroup) {
-      return res.status(400).json({ errors: [{ msg: 'Group does not exist' }] })
-  }
+    const { user_id, group_id } = req.params
 
-  if (validGroup.admin_id == user_id) {
-      return res.status(403).json({ errors: [{ msg: 'Group admin cannot leave the group' }] })
-  }
-  
-  const groupMember = await GroupMember.findOne({ where: { user_id, group_id } })
-  if (!groupMember) {
-      return res.status(404).json({ errors: [{ msg: 'Group member not found' }] })
-  }
+    const validGroup = await Group.findOne({ where: { id: group_id } })
+    if (!validGroup) {
+        return res.status(400).json({ errors: [{ msg: 'Group does not exist' }] })
+    }
 
-  const deletedGroupMember = await groupMember.destroy()
-  if (!deletedGroupMember) {
-      return res.status(500).json({ errors: [{ msg: 'Failed to delete group member' }] })
-  }
+    if (validGroup.admin_id == user_id) {
+        return res.status(403).json({ errors: [{ msg: 'Group admin cannot leave the group' }] })
+    }
 
-  return res.status(200).send({ message: 'Group member deleted'})
+    const groupMember = await GroupMember.findOne({ where: { user_id, group_id } })
+    if (!groupMember) {
+        return res.status(404).json({ errors: [{ msg: 'Group member not found' }] })
+    }
+
+    const deletedGroupMember = await groupMember.destroy()
+    if (!deletedGroupMember) {
+        return res.status(500).json({ errors: [{ msg: 'Failed to delete group member' }] })
+    }
+
+    return res.status(200).send({ message: 'Group member deleted'})
 })
 
 // groupRoutes.patch('/groups/:group_id', validatePatchGroupName, validatePatchGroupDescription ,async (req, res) => {
@@ -285,21 +320,38 @@ groupRoutes.get('/members/:group_id', validateGetGroupMembers, async (req, res) 
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-
     const group_id = req.params.group_id;
-    const group_members = await GroupMember.findAll({ where: { group_id } });
-    
-    if (!group_members) {
-      return res.status(404).send({ error: "Group has no members" });
-    }
 
-    const members_info_promises = group_members.map(member => {
-      return User.findOne({ where: { id: member.user_id } });
+    const group_members = await GroupMember.findAll({
+        where: { group_id },
+        attributes: ['pending'], // Only select the 'pending' field from GroupMember
+        include: [{
+            model: User,
+            as: 'user',
+            attributes: ['id', 'username', 'email'] // Only select 'id', 'username', 'email' from User
+        }]
     });
 
-    const members_info = await Promise.all(members_info_promises);
+    if (!group_members) {
+    return res.status(404).send({ error: "Group has no members" });
+    }
 
-    return res.status(200).json(members_info);
+    return res.status(200).json(group_members);
+
+    // const group_id = req.params.group_id;
+    // const group_members = await GroupMember.findAll({ where: { group_id } });
+    
+    // if (!group_members) {
+    //   return res.status(404).send({ error: "Group has no members" });
+    // }
+
+    // const members_info_promises = group_members.map(member => {
+    //   return User.findOne({ where: { id: member.user_id } });
+    // });
+
+    // const members_info = await Promise.all(members_info_promises);
+
+    // return res.status(200).json(members_info);
 });
 
 export default groupRoutes;
