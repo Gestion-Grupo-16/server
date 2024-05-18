@@ -166,10 +166,37 @@ groupRoutes.patch('/members/:group_id/:user_id', validatePatchAdminGroup, async 
     }catch(e) {
         return res.status(500).send({ message: "Couldn save groupmember" });
     }
+});
 
 
+groupRoutes.delete('/members/:group_id/:user_id', validatePatchAdminGroup, async (req, res) =>{
+    console.log("DELETE res.body", req.body)
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() })
+    }
+    const { user_id, group_id } = req.params
 
-    
+
+    const validUser = await User.findOne({ where: { id: user_id } })
+    if (!validUser) {
+        return res.status(400).json({ errors: [{ msg: 'User does not exist' }] })
+    }
+    const validGroup = await Group.findOne({ where: { id: group_id } })
+    if (!validGroup) {
+        return res.status(400).json({ errors: [{ msg: 'Group does not exist' }] })
+    }
+
+    const groupMember = await GroupMember.findOne({ where: { user_id, group_id, pending: true } })
+    if (!groupMember) {
+        return res.status(400).json({ errors: [{ msg: 'No invitation for this group' }] })
+    }
+    const deletedGroupMember = await groupMember.destroy()
+    if (!deletedGroupMember) {
+        return res.status(500).json({ errors: [{ msg: 'Failed to delete the group invitation' }] })
+    }
+
+    return res.status(200).send({ message: 'Invitation Deleted'})
 });
 
 
