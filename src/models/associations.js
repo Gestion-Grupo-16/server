@@ -1,6 +1,9 @@
 import { GroupMember } from "./GroupMember.js";
 import { User } from "./User.js";
 import { Group } from "./Group.js";
+import { Expense } from "./Expense.js";
+import { IndividualExpense } from "./IndividualExpense.js";
+
 
 User.hasMany(GroupMember, { foreignKey: 'user_id' });
 User.hasMany(Group, {foreignKey:'admin_id'});

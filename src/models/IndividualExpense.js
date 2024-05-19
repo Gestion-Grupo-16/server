@@ -18,11 +18,11 @@ export const IndividualExpense = sequelize.define(
       type: DataTypes.INTEGER,
       foreignKey: true,
     },
-    total_payed : {
+    total_spent : {
       type: DataTypes.FLOAT,
       allowNull: false,
     },
-    total_owed : {
+    total_paid : {
       type: DataTypes.FLOAT,
       allowNull: false,
     },

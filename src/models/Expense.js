@@ -1,6 +1,16 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from "../database/database.js";
 
+export const Categories = [
+  "Comida",
+  "Transporte",
+  "Salud",
+  "Educación",
+  "Entretenimiento",
+  "Servicios",
+  "Otros",
+];
+
 export const Expense = sequelize.define(
   "expenses",
   {
@@ -17,9 +27,12 @@ export const Expense = sequelize.define(
       type: DataTypes.FLOAT,
       allowNull: false,
     },
-    category : {
+    category: {
       type: DataTypes.STRING,
       allowNull: false,
+      validate: {
+        isIn: [Categories],  
+      },
     },
     currency : {
       type: DataTypes.STRING,

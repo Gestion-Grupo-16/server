@@ -48,6 +48,11 @@ https://server-y9uq.onrender.com
   - <span style="color:green"> Acepta la invitación a un grupo, cambiando el estado de groupmember a pending=false </span>.
   - Params: user_id, group_id
 
+- **DELETE** /members/:group_id/:user_id
+
+  - <span style="color:green"> Rechaza la invitación a un grupo, eliminando al integrante del grupo junto a pending=true </span>.
+  - Params: user_id, group_id
+
 - **GET** /members/:group_id
 
   - <span style="color:green"> Obtiene a los integrantes de un grupo </span>.
@@ -75,6 +80,14 @@ https://server-y9uq.onrender.com
 
   - <span style="color:green"> Elimina a un usuario de un grupo </span>.
   - Params: group_id, user_id
+
+### Expenses (/expenses)
+
+- **POST** /:group_id
+
+  - <span style="color:green"> Crea un nuevo gasto </span>.
+  - Params: group_id
+  - Body: {  total_spent: float, category: String, currency: String, participants: Array<Hash> }
 
 ## Ejecución
 
