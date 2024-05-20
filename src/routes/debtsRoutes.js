@@ -66,40 +66,121 @@ debtsRoutes.post('/:group_id/:new_group_member', validateNewDebts, async (req, r
     return res.status(201).json({ group_id: group_id, debtor_id: new_group_member, creditor_id: group_members.map(group_member => group_member.user_id), amount_owed: 0 });
 });
   
+debtsRoutes.patch('/:group_id', validateNewDebts, async (req, res) => {
 
-// expenseRoutes.get('/:group_id', validateGetGroupExpenses, async (req, res) => {
-//     const { group_id } = req.params
-//     console.log(group_id)
+    const { group_id } = req.params
+    const { debtor_id, creditor_id, amount_owed } = req.body
 
-//     const validGroup = await Group.findOne({ where: { id: group_id } })
-//     if (!validGroup) {
-//         return res.status(400).json({ errors: [{ msg: 'Group does not exist' }] })
-//     }
+    const validGroup = await Group.findOne({ where: { id: group_id } })
+    if (!validGroup) {
+        return res.status(400).json({ errors: [{ msg: 'Group does not exist' }] })
+    }
 
-//     const validExpenses = await Expense.findAll({ where: { group_id: group_id}})
-//     if (!validExpenses) {
-//         return res.status(400).json({ errors: [{ msg: 'The group has no expenses' }] })
-//     }
+    const validDebtor = await GroupMember.findOne({ where: { group_id, user_id: debtor_id } })
+    if (!validDebtor) {
+        return res.status(400).json({ errors: [{ msg: 'Debtor does not belong to this group' }] })
+    }
 
-//     return res.status(200).json(validExpenses);
-// });
+    const validCreditor = await GroupMember.findOne({ where: { group_id, user_id: creditor_id } })
+    if (!validCreditor) {
+        return res.status(400).json({ errors: [{ msg: 'Creditor does not belong to this group' }] })
+    }
 
-// expenseRoutes.get('/individual/:group_id', validateGetGroupExpenses, async (req, res) => {
-//     const { group_id } = req.params
-//     console.log(group_id)
+    const updatedDebt = await Debts.findOne({ where: { group_id, debtor_id, creditor_id } })
+    if (!updatedDebt) {
 
-//     const validGroup = await Group.findOne({ where: { id: group_id } })
-//     if (!validGroup) {
-//         return res.status(400).json({ errors: [{ msg: 'Group does not exist' }] })
-//     }
+        const updatedDebt = await Debts.findOne({ where: { group_id, debtor_id: creditor_id, creditor_id: debtor_id } })
+        console.log("Deuda actual : \n");
+        console.log(updatedDebt);
+        console.log("\n");
+        console.log("Debtor : " + creditor_id + "\n");
+        console.log("Creditor : " + debtor_id + "\n");
+        if (!updatedDebt) {
+            return res.status(500).send({ error: "Error while updating the debt" });
+        }
+        // El que debe, antes le debían (hay que hacer el balance y ver si dar vuelta los roles o no)
+        else{
+            const balance = updatedDebt.amount_owed - amount_owed;
+            console.log(balance);
 
-//     const validIndividualExpenses = await IndividualExpense.findAll({ where: { group_id: group_id}})
-//     if (!validIndividualExpenses) {
-//         return res.status(400).json({ errors: [{ msg: 'The group has no individual expenses' }] })
-//     }
+            if(balance > 0){
 
-//     return res.status(200).json(validIndividualExpenses);
-// });
+                console.log("balance > 0")
 
+                updatedDebt.amount_owed = balance;
+                try {
+                    await updatedDebt.save();
+                    return res.status(200).send({ message: "Debt updated successfully" });
+                }
+                catch (e) {
+                    return res.status(500).send({ error: "Error while updating debt" });
+                }             }
+            else{
+
+                console.log("balance < 0")
+                updatedDebt.amount_owed = Math.abs(balance);
+                
+                // console.log("creditor nuevo : " +  creditor_id + "\n debtor nuevo : " + debtor_id);
+
+                updatedDebt.debtor_id = debtor_id.toString();
+                updatedDebt.creditor_id = creditor_id.toString();
+
+                console.log("Nuevo debt:");
+                console.log(updatedDebt);
+
+                try {
+                    await updatedDebt.save();
+                    return res.status(200).send({ message: "Debt updated successfully" });
+                }
+                catch (e) {
+                    return res.status(500).send({ error: "Error while updating debt" });
+                } 
+
+            }
+        }
+    }
+    // El que debe, ya estaba debiendo (sumar las deudas y dejarlo como esta)
+    else{
+        updatedDebt.amount_owed += amount_owed;
+
+        try {
+            await updatedDebt.save();
+            return res.status(200).send({ message: "Debt updated successfully" });
+        }
+        catch (e) {
+            return res.status(500).send({ error: "Error while updating debt" });
+        } 
+    }
+});
 
 export default debtsRoutes;
+
+
+// Actualmente : 
+//   - debtor_id = 1
+//   - creditor_id = 2
+//   - amount_owed = 50
+
+// Se ingresa : 
+//   - debtor_id = 2
+//   - creditor_id = 1
+//   - amount_owed = 150
+
+// Resultado :
+//   - debtor_id = 2
+//   - creditor_id = 1
+//   - amount_owed = 100
+
+// -------------------------------
+
+// Actualmente : 
+//   - creditor_id = 1
+//   - debtor_id = 2
+//   - amount_owed = 50
+
+// balance = 50 - 150 = -100
+
+// Se ingresa : 
+//   - debtor_id = 2
+//   - creditor_id = 1
+//   - amount_owed = 150
