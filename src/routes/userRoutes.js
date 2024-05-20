@@ -12,14 +12,14 @@ const validatePatchUser = [
     .withMessage("User id is required")
     .bail()
     .isString()
-    .withMessage("User id must be an String")
+    .withMessage("User id must be a String")
     .bail(),
     body("new_username")
     .notEmpty()
     .withMessage("New username is required")
     .bail()
     .isString()
-    .withMessage("New username must be an String")
+    .withMessage("New username must be a String")
 ];
 
 
@@ -29,7 +29,7 @@ const validateCreateUser = [
       .withMessage("Id is required")
       .bail()
       .isString()
-      .withMessage("Id must be an String")
+      .withMessage("Id must be a String")
       .bail(),
     body("email")
       .notEmpty()
@@ -51,7 +51,7 @@ param("user_id")
     .withMessage("Id is required")
     .bail()
     .isString()
-    .withMessage("Id must be an String")
+    .withMessage("Id must be a String")
     .bail()  
 ];
 
@@ -61,7 +61,7 @@ param("user_identification")
     .withMessage("Identification is required")
     .bail()
     .isString()
-    .withMessage("Identification must be an String")
+    .withMessage("Identification must be a String")
     .bail()  
 ]
 

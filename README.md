@@ -25,9 +25,9 @@ https://server-y9uq.onrender.com
   - <span style="color:green">Obtiene la información de un usuario</span>.
   - Params: user_id
 
-- **GET** /
+- **GET** /identification/:user_identification
   - <span style="color:green">Obtiene la información de usuarios que contienen userIndentification como username o email</span>.
-  - Body: { user_identification: String }:
+  - Params: user_identification
 
 ### Groups (/groups)
 
@@ -88,6 +88,17 @@ https://server-y9uq.onrender.com
   - <span style="color:green"> Crea un nuevo gasto </span>.
   - Params: group_id
   - Body: {  total_spent: float, category: String, currency: String, participants: Array<Hash> }
+  - Array de participants: [ {"user_id": "id_user1", "spent": 100, "paid": 200}, ... ]
+
+- **GET** /:group_id
+
+  - <span style="color:green"> Obtiene los gastos de un grupo </span>.
+  - Params: group_id
+
+- **GET** /individual/:group_id
+
+  - <span style="color:green"> Obtiene los gastos individuales de un grupo </span>.
+  - Params: group_id
 
 ## Ejecución
 

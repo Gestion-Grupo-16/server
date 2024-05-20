@@ -45,9 +45,18 @@ const validateNewExpense = [
         .isArray()
         .withMessage('Participants must be an array')
         .bail()
-  ];
+];
+const validateGetGroupExpenses = [
+    param("group_id")
+    .notEmpty()
+    .withMessage("Group id is required")
+    .bail()
+    .isInt()
+    .withMessage("Group id must be an integer")
+    .bail()
+];
 
-expenseRoutes.post('/:group_id',validateNewExpense, async (req, res) => {
+expenseRoutes.post('/:group_id', validateNewExpense, async (req, res) => {
     const { group_id } = req.params
     const { total_spent, category, currency, participants  } = req.body
     console.log(group_id)
@@ -83,6 +92,41 @@ expenseRoutes.post('/:group_id',validateNewExpense, async (req, res) => {
     return res.status(201).json({ id: expense.id, group_id: group_id, total_spent, category, currency, participants });
   });
   
+
+expenseRoutes.get('/:group_id', validateGetGroupExpenses, async (req, res) => {
+    const { group_id } = req.params
+    console.log(group_id)
+
+    const validGroup = await Group.findOne({ where: { id: group_id } })
+    if (!validGroup) {
+        return res.status(400).json({ errors: [{ msg: 'Group does not exist' }] })
+    }
+
+    const validExpenses = await Expense.findAll({ where: { group_id: group_id}})
+    if (!validExpenses) {
+        return res.status(400).json({ errors: [{ msg: 'The group has no expenses' }] })
+    }
+
+    return res.status(200).json(validExpenses);
+});
+
+expenseRoutes.get('/individual/:group_id', validateGetGroupExpenses, async (req, res) => {
+    const { group_id } = req.params
+    console.log(group_id)
+
+    const validGroup = await Group.findOne({ where: { id: group_id } })
+    if (!validGroup) {
+        return res.status(400).json({ errors: [{ msg: 'Group does not exist' }] })
+    }
+
+    const validIndividualExpenses = await IndividualExpense.findAll({ where: { group_id: group_id}})
+    if (!validIndividualExpenses) {
+        return res.status(400).json({ errors: [{ msg: 'The group has no individual expenses' }] })
+    }
+
+    return res.status(200).json(validIndividualExpenses);
+});
+
 
 
 export default expenseRoutes;
