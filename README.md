@@ -100,6 +100,14 @@ https://server-y9uq.onrender.com
   - <span style="color:green"> Obtiene los gastos individuales de un grupo </span>.
   - Params: group_id
 
+### Debts (/debts)
+
+- **POST** /
+
+  - <span style="color:green"> Crea una nueva deuda cada vez que se agrega un usuario a un grupo </span>.
+  - Params: group_id, new_group_member
+
+
 ## Ejecución
 
 ```
