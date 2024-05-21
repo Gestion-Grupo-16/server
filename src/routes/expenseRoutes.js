@@ -3,7 +3,7 @@ import { body, param, validationResult } from "express-validator";
 import { User } from "../models/User.js";
 import { Group } from "../models/Group.js";
 import { GroupMember } from "../models/GroupMember.js";
-import { Expense,Categories } from "../models/Expense.js";
+import { Expense,Categories,Currencies } from "../models/Expense.js";
 import {IndividualExpense} from "../models/IndividualExpense.js";
 
 
@@ -132,6 +132,14 @@ expenseRoutes.get('/individual/:group_id', validateGetGroupExpenses, async (req,
     console.log(validIndividualExpenses);
 
     return res.status(200).json(validIndividualExpenses);
+});
+
+expenseRoutes.get('/options/categories', async (req, res) => {
+    return res.status(200).json(Categories);
+});
+
+expenseRoutes.get('/options/currencies', async (req, res) => {
+    return res.status(200).json(Currencies);
 });
 
 

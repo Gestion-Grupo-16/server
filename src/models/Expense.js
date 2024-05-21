@@ -11,6 +11,16 @@ export const Categories = [
   "Otros",
 ];
 
+export const Currencies = [
+  "USD",
+  "EUR",
+  "ARS",
+  "BTC",
+  "ETH",
+  "USDT",
+  "DAI",
+]
+
 export const Expense = sequelize.define(
   "expenses",
   {

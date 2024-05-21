@@ -100,6 +100,16 @@ https://server-y9uq.onrender.com
   - <span style="color:green"> Obtiene los gastos individuales de un grupo </span>.
   - Params: group_id
 
+- **GET** /options/categories
+
+  - <span style="color:green"> Obtiene las categorias a las que puede pertenecer un gasto </span>.
+  - Params: -
+
+- **GET** /options/currencies
+
+  - <span style="color:green"> Obtiene las monedas en las que puede estar expresado un gasto </span>.
+  - Params: -
+
 ### Debts (/debts)
 
 - **POST** /
