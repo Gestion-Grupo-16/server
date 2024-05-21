@@ -122,7 +122,14 @@ expenseRoutes.get('/individual/:group_id', validateGetGroupExpenses, async (req,
     const validIndividualExpenses = await IndividualExpense.findAll({ where: { group_id: group_id}})
     if (!validIndividualExpenses) {
         return res.status(400).json({ errors: [{ msg: 'The group has no individual expenses' }] })
+    } 
+
+    for (const individualExpense of validIndividualExpenses) {
+        const user = await User.findOne({ where: { id: individualExpense.user_id } });
+        individualExpense.dataValues.user = user;
     }
+    
+    console.log(validIndividualExpenses);
 
     return res.status(200).json(validIndividualExpenses);
 });
