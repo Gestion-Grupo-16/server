@@ -59,7 +59,18 @@ const validateGetGroupExpenses = [
 expenseRoutes.post('/:group_id', validateNewExpense, async (req, res) => {
     const { group_id } = req.params
     const { total_spent, category, currency, participants  } = req.body
-    console.log(group_id)
+    
+    let spent = 0;
+    let paid = 0;
+    for (const participant of participants) {
+        spent += participant.spent;
+        paid += participant.paid;
+    };
+
+    if (spent !== total_spent || paid !== total_spent) {
+        return res.status(400).json({ errors: [{ msg: 'Total spent and total paid must be equal to the sum of the individual expenses' }] });
+    }
+    
     const validGroup = await Group.findOne({ where: { id: group_id } })
     if (!validGroup) {
         return res.status(400).json({ errors: [{ msg: 'Group does not exist' }] })
@@ -133,6 +144,46 @@ expenseRoutes.get('/individual/:group_id', validateGetGroupExpenses, async (req,
 
     return res.status(200).json(validIndividualExpenses);
 });
+
+
+expenseRoutes.get('/balance/:group_id', async (req, res) => {
+    const { group_id } = req.params
+    
+    const group = await Group.findOne({ where: { id: group_id } });
+    
+    if(!group){
+        return res.status(400).json({ errors: [{ msg: 'Group does not exist' }] });
+    }
+
+    const expenses = await IndividualExpense.findAll({ where: { group_id: group_id }});
+    
+    if (!expenses) {
+        return res.status(400).json({ errors: [{ msg: 'The group has no individual expenses' }] })
+    }
+    
+    const group_members = await GroupMember.findAll({ where: { group_id: group_id }});
+    
+    let members = {};
+    
+    for(const member of group_members){
+        members[member.user_id] = 0;
+    }
+
+    let total_debt = 0;
+    
+    for (const expense of expenses){                
+        members[expense.user_id] += expense.total_paid - expense.total_spent;
+    }
+    
+    for (const member in members){
+        if(members[member] < 0){
+            total_debt += members[member];
+        }        
+    }
+    return res.status(200).json({"total_debt":total_debt, members});
+
+});
+
 
 expenseRoutes.get('/options/categories', async (req, res) => {
     return res.status(200).json(Categories);

@@ -34,6 +34,8 @@ const validateNewDebts = [
         .bail()
 ];
 
+
+// Mover esta logica a cuando se acepta una Invitacion
 debtsRoutes.post('/:group_id/:new_group_member', validateNewDebts, async (req, res) => {
     
     const { group_id, new_group_member } = req.params
@@ -66,6 +68,7 @@ debtsRoutes.post('/:group_id/:new_group_member', validateNewDebts, async (req, r
     return res.status(201).json({ group_id: group_id, debtor_id: new_group_member, creditor_id: group_members.map(group_member => group_member.user_id), amount_owed: 0 });
 });
   
+// Mover o usar esto cuando se crea un gasto
 debtsRoutes.patch('/:group_id', validateNewDebts, async (req, res) => {
 
     const { group_id } = req.params
@@ -118,21 +121,26 @@ debtsRoutes.patch('/:group_id', validateNewDebts, async (req, res) => {
             else{
 
                 console.log("balance < 0")
-                updatedDebt.amount_owed = Math.abs(balance);
+                // updatedDebt.amount_owed = Math.abs(balance);
+                const debt = await Debts.create({ group_id, debtor_id: creditor_id, creditor_id: debtor_id, amount_owed: Math.abs(balance) });
                 
-                // console.log("creditor nuevo : " +  creditor_id + "\n debtor nuevo : " + debtor_id);
+                if(!debt){
+                    return res.status(500).send({ error: "Error while creating a new debt" });
+                }
 
-                updatedDebt.debtor_id = debtor_id.toString();
-                updatedDebt.creditor_id = creditor_id.toString();
-
+                // console.log("creditor nuevo : " +  creditor_id + "\n debtor nuevo : " + debtor_id);                
+                // updatedDebt.debtor_id = debtor_id.toString();
+                // updatedDebt.creditor_id = creditor_id.toString();
+                
                 console.log("Nuevo debt:");
-                console.log(updatedDebt);
-
-                try {
-                    await updatedDebt.save();
+                // console.log(updatedDebt);
+                
+                try {                    
+                    await updatedDebt.delete();
                     return res.status(200).send({ message: "Debt updated successfully" });
                 }
                 catch (e) {
+                    await debt.delete();
                     return res.status(500).send({ error: "Error while updating debt" });
                 } 
 
