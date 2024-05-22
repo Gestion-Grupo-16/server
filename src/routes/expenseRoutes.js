@@ -68,16 +68,16 @@ expenseRoutes.post('/:group_id', validateNewExpense, async (req, res) => {
     };
 
     if (spent !== total_spent || paid !== total_spent) {
-        return res.status(400).json({ errors: [{ msg: 'Total spent and total paid must be equal to the sum of the individual expenses' }] });
+        return res.status(400).json({ errors: [{ msg: 'El total gastado y el total pagado tienen que ser iguales a la suma de los gastos individuales' }] });
     }
     
     const validGroup = await Group.findOne({ where: { id: group_id } })
     if (!validGroup) {
-        return res.status(400).json({ errors: [{ msg: 'Group does not exist' }] })
+        return res.status(400).json({ errors: [{ msg: 'El grupo no existe' }] })
     }
     const validCategory = Categories.includes(category)
     if (!validCategory) {
-        return res.status(400).json({ errors: [{ msg: 'Invalid category' }] })
+        return res.status(400).json({ errors: [{ msg: 'Categoria invalida' }] })
     }
     const expense = await Expense.create({ group_id, total_spent, category, currency });
 
@@ -85,7 +85,7 @@ expenseRoutes.post('/:group_id', validateNewExpense, async (req, res) => {
 
     for (const participant of participants) {
         if (!participant.hasOwnProperty('user_id') || !participant.hasOwnProperty('spent') || !participant.hasOwnProperty('paid')) {
-            return res.status(400).json({ errors: [{ msg: 'Invalid participant: user_id or spent or paid  is required' }] });
+            return res.status(400).json({ errors: [{ msg: 'Participante invalido: se requieren los campos user_id, spent o paid' }] });
         }
         console.log(participant)
         const validParticipant = await GroupMember.findOne({ where: { user_id: participant['user_id'], group_id: group_id } })
@@ -95,7 +95,7 @@ expenseRoutes.post('/:group_id', validateNewExpense, async (req, res) => {
                 await createdIndividualExpenses.destroy();
             }
             await expense.destroy();
-            return res.status(400).json({ errors: [{ msg: 'Invalid participant: user does not belong to group' }] });
+            return res.status(400).json({ errors: [{ msg: 'Participante invalido: El usuario no pertenece al grupo' }] });
         }
         const individualExpense = await IndividualExpense.create({ expense_id: expense.id, user_id: participant['user_id'], group_id: group_id, total_spent: participant['spent'], total_paid: participant['paid'] });
         individualExpenses.push(individualExpense);
@@ -110,12 +110,12 @@ expenseRoutes.get('/:group_id', validateGetGroupExpenses, async (req, res) => {
 
     const validGroup = await Group.findOne({ where: { id: group_id } })
     if (!validGroup) {
-        return res.status(400).json({ errors: [{ msg: 'Group does not exist' }] })
+        return res.status(400).json({ errors: [{ msg: 'El grupo no existe' }] })
     }
 
     const validExpenses = await Expense.findAll({ where: { group_id: group_id}})
     if (!validExpenses) {
-        return res.status(400).json({ errors: [{ msg: 'The group has no expenses' }] })
+        return res.status(400).json({ errors: [{ msg: 'El grupo no tiene gastos' }] })
     }
 
     return res.status(200).json(validExpenses);
@@ -127,12 +127,12 @@ expenseRoutes.get('/individual/:group_id', validateGetGroupExpenses, async (req,
 
     const validGroup = await Group.findOne({ where: { id: group_id } })
     if (!validGroup) {
-        return res.status(400).json({ errors: [{ msg: 'Group does not exist' }] })
+        return res.status(400).json({ errors: [{ msg: 'El grupo no existe' }] })
     }
 
     const validIndividualExpenses = await IndividualExpense.findAll({ where: { group_id: group_id}})
     if (!validIndividualExpenses) {
-        return res.status(400).json({ errors: [{ msg: 'The group has no individual expenses' }] })
+        return res.status(400).json({ errors: [{ msg: 'El grupo no tiene gastos individuales' }] })
     } 
 
     for (const individualExpense of validIndividualExpenses) {
@@ -152,27 +152,40 @@ expenseRoutes.get('/balance/:group_id', async (req, res) => {
     const group = await Group.findOne({ where: { id: group_id } });
     
     if(!group){
-        return res.status(400).json({ errors: [{ msg: 'Group does not exist' }] });
+        return res.status(400).json({ errors: [{ msg: 'El grupo no existe' }] });
     }
 
     const expenses = await IndividualExpense.findAll({ where: { group_id: group_id }});
     
     if (!expenses) {
-        return res.status(400).json({ errors: [{ msg: 'The group has no individual expenses' }] })
+        return res.status(400).json({ errors: [{ msg: 'El grupo no tiene gastos individuales' }] })
     }
     
-    const group_members = await GroupMember.findAll({ where: { group_id: group_id }});
+    const group_members = await GroupMember.findAll({ 
+        where: { group_id: group_id },
+        include: [{
+            model: User,
+            attributes: ['id', 'username', 'email']
+        }]
+    });
     
     let members = {};
     
     for(const member of group_members){
-        members[member.user_id] = 0;
+        // console.log(member);    
+        const user = member.user;
+        console.log("User:",user);
+        members[user.id] = {
+            username: user.username,
+            email: user.email,
+            balance: 0
+        };
     }
-
+    // return res.status(200).json({ members});
     let total_debt = 0;
     
     for (const expense of expenses){                
-        members[expense.user_id] += expense.total_paid - expense.total_spent;
+        members[expense.user_id]["balance"] += expense.total_paid - expense.total_spent;
     }
     
     for (const member in members){
@@ -180,6 +193,7 @@ expenseRoutes.get('/balance/:group_id', async (req, res) => {
             total_debt += members[member];
         }        
     }
+    members = Object.entries(members).map(([id, content]) => ({id, ...content}))
     return res.status(200).json({"total_debt":total_debt, members});
 
 });

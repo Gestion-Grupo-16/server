@@ -42,7 +42,7 @@ debtsRoutes.post('/:group_id/:new_group_member', validateNewDebts, async (req, r
     
     const validGroup = await Group.findOne({ where: { id: group_id } })
     if (!validGroup) {
-        return res.status(400).json({ errors: [{ msg: 'Group does not exist' }] })
+        return res.status(400).json({ errors: [{ msg: 'El grupo no existe' }] })
     }
 
     const group_members = await GroupMember.findAll({ 
@@ -50,7 +50,7 @@ debtsRoutes.post('/:group_id/:new_group_member', validateNewDebts, async (req, r
     });  
         
     if (!group_members) {
-      return res.status(404).send({ error: "Group has no users" });
+      return res.status(404).send({ error: "El grupo no tiene usuarios" });
     }
 
     for (const group_member of group_members) {
@@ -60,7 +60,7 @@ debtsRoutes.post('/:group_id/:new_group_member', validateNewDebts, async (req, r
 
             const newDebt = await Debts.create({ group_id, debtor_id: new_group_member, creditor_id: user_id, amount_owed: 0 });
             if (!newDebt) {
-                return res.status(500).send({ error: "Error while creating a new debt" });
+                return res.status(500).send({ error: "Error creando nueva deuda" });
             }
         }
     }
@@ -76,17 +76,17 @@ debtsRoutes.patch('/:group_id', validateNewDebts, async (req, res) => {
 
     const validGroup = await Group.findOne({ where: { id: group_id } })
     if (!validGroup) {
-        return res.status(400).json({ errors: [{ msg: 'Group does not exist' }] })
+        return res.status(400).json({ errors: [{ msg: 'El grupo no existe' }] })
     }
 
     const validDebtor = await GroupMember.findOne({ where: { group_id, user_id: debtor_id } })
     if (!validDebtor) {
-        return res.status(400).json({ errors: [{ msg: 'Debtor does not belong to this group' }] })
+        return res.status(400).json({ errors: [{ msg: 'El deudor no pertenece a este grupo' }] })
     }
 
     const validCreditor = await GroupMember.findOne({ where: { group_id, user_id: creditor_id } })
     if (!validCreditor) {
-        return res.status(400).json({ errors: [{ msg: 'Creditor does not belong to this group' }] })
+        return res.status(400).json({ errors: [{ msg: 'Acreedor no pertenece a este grupo' }] })
     }
 
     const updatedDebt = await Debts.findOne({ where: { group_id, debtor_id, creditor_id } })
@@ -99,7 +99,7 @@ debtsRoutes.patch('/:group_id', validateNewDebts, async (req, res) => {
         console.log("Debtor : " + creditor_id + "\n");
         console.log("Creditor : " + debtor_id + "\n");
         if (!updatedDebt) {
-            return res.status(500).send({ error: "Error while updating the debt" });
+            return res.status(500).send({ error: "Error actualizando deuda" });
         }
         // El que debe, antes le debían (hay que hacer el balance y ver si dar vuelta los roles o no)
         else{
@@ -113,10 +113,10 @@ debtsRoutes.patch('/:group_id', validateNewDebts, async (req, res) => {
                 updatedDebt.amount_owed = balance;
                 try {
                     await updatedDebt.save();
-                    return res.status(200).send({ message: "Debt updated successfully" });
+                    return res.status(200).send({ message: "Deuda actualizada exitosamente" });
                 }
                 catch (e) {
-                    return res.status(500).send({ error: "Error while updating debt" });
+                    return res.status(500).send({ error: "Error actualizando deuda" });
                 }             }
             else{
 
@@ -125,23 +125,23 @@ debtsRoutes.patch('/:group_id', validateNewDebts, async (req, res) => {
                 const debt = await Debts.create({ group_id, debtor_id: creditor_id, creditor_id: debtor_id, amount_owed: Math.abs(balance) });
                 
                 if(!debt){
-                    return res.status(500).send({ error: "Error while creating a new debt" });
+                    return res.status(500).send({ error: "Error creando nueva deuda" });
                 }
 
                 // console.log("creditor nuevo : " +  creditor_id + "\n debtor nuevo : " + debtor_id);                
                 // updatedDebt.debtor_id = debtor_id.toString();
                 // updatedDebt.creditor_id = creditor_id.toString();
                 
-                console.log("Nuevo debt:");
+                // console.log("Nuevo debt:");
                 // console.log(updatedDebt);
                 
                 try {                    
                     await updatedDebt.delete();
-                    return res.status(200).send({ message: "Debt updated successfully" });
+                    return res.status(200).send({ message: "Deuda actualizada exitosamente" });
                 }
                 catch (e) {
                     await debt.delete();
-                    return res.status(500).send({ error: "Error while updating debt" });
+                    return res.status(500).send({ error: "Error actualizando deuda" });
                 } 
 
             }
@@ -153,10 +153,10 @@ debtsRoutes.patch('/:group_id', validateNewDebts, async (req, res) => {
 
         try {
             await updatedDebt.save();
-            return res.status(200).send({ message: "Debt updated successfully" });
+            return res.status(200).send({ message: "Deuda actualizada exitosamente" });
         }
         catch (e) {
-            return res.status(500).send({ error: "Error while updating debt" });
+            return res.status(500).send({ error: "Error actualizando deuda" });
         } 
     }
 });

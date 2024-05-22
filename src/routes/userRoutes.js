@@ -76,14 +76,14 @@ userRoutes.post('/',validateCreateUser , async (req,res) => {
     const idExists = await User.findOne({ where: { id } });
 
     if (idExists) {
-      return res.status(409).send({ error: "ID already exists" });
+      return res.status(409).send({ error: "El ID ya existe" });
     }
     
     const userExists = await User.findOne({ where: { username } });
 
     // TODO: los nombre si se pueden repetir
     if (userExists) {
-      return res.status(409).send({ error: "Username already exists" });
+      return res.status(409).send({ error: "El username ya existe" });
     }
     
     const newUser = await User.create({
@@ -93,7 +93,7 @@ userRoutes.post('/',validateCreateUser , async (req,res) => {
     });
     
     if (!newUser) {
-      return res.status(500).send({ error: "Error while creating user" });
+      return res.status(500).send({ error: "Error creando al usuario" });
     }
 
     res.status(201).send({id ,username, email});
@@ -111,16 +111,16 @@ userRoutes.patch('/', validatePatchUser, async (req, res) => {
   const userExists = await User.findOne({ where: { id:user_id } });
 
   if (!userExists) {
-    return res.status(409).send({ error: "User not found" });
+    return res.status(409).send({ error: "Usuario no encontrado" });
   }
   userExists.username = new_username
   try{
     await userExists.save();
   } catch (error) {
-    return res.status(500).send({ error: "Failed to update user" });
+    return res.status(500).send({ error: "Fallo al actualizar el usuario" });
   }
   
-  return res.status(200).send({ message: "User updated successfully" });
+  return res.status(200).send({ message: "El usuario se actualizo exitosamente" });
 
 });
 
@@ -136,7 +136,7 @@ userRoutes.get('/:user_id',validateGetUser, async (req, res) => {
   const user = await User.findOne({ where: { id: user_id } });
 
   if (!user) {
-    return res.status(404).send({ error: "User not found" });
+    return res.status(404).send({ error: "Usuario no encontrado" });
   }
 
   return res.status(200).json(user);
@@ -162,7 +162,7 @@ userRoutes.get('/identification/:user_identification', validateGetIdentification
   });
 
   if (!users || users.length === 0) {
-    return res.status(404).send([{ error: "User not found" }]);
+    return res.status(404).send([{ error: "Usuario no encontrado" }]);
   }
 
   return res.status(200).json(users);
@@ -177,7 +177,7 @@ userRoutes.delete('/:users/:user_id', async (req, res) => {
     await User.findOne({ where: { id:user_id } });
   }
   catch{
-    return res.status(409).send({ error: "User not found" });
+    return res.status(409).send({ error: "Usuario no encontrado" });
   }
 
   // Hay que borrar todos los Group Members que tiene del grupo

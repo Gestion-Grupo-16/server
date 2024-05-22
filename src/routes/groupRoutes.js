@@ -91,20 +91,20 @@ groupRoutes.post('/',validateCreateGroup , async (req, res) => {
 
     const user = await User.findOne({ where: { id: user_id } });
     if (!user) {
-        return res.status(404).send({ error: "User not found" });
+        return res.status(404).send({ error: "Usuario no encontrado" });
     }  
     
     const group = await Group.create({name: name, admin_id: user_id, description: description});
     if (!group) {
-        return res.status(500).send({ error: "Error while creating group" });
+        return res.status(500).send({ error: "Error creando el grupo" });
     }
 
     const group_member= await GroupMember.create({group_id: group.id, user_id, pending:false});
     if (!group_member) {
-        return res.status(500).send({ error: "Error while creating group member" });
+        return res.status(500).send({ error: "Error creando al miembro del grupo" });
     }
 
-    res.status(201).send({ message: "Group successfully created" });
+    res.status(201).send({ message: "Grupo creado exitosamente" });
     // res.status(201).send({group_id, name})
 });
 
@@ -119,22 +119,22 @@ groupRoutes.post('/members/:group_id/:user_id', validateGroupMemberOperation, as
 
     const validUser = await User.findOne({ where: { id: user_id } })
     if (!validUser) {
-        return res.status(400).json({ errors: [{ msg: 'User does not exist' }] })
+        return res.status(400).json({ errors: [{ msg: 'El usuario no existe' }] })
     }
 
     const validGroup = await Group.findOne({ where: { id: group_id } })
     if (!validGroup) {
-        return res.status(400).json({ errors: [{ msg: 'Group does not exist' }] })
+        return res.status(400).json({ errors: [{ msg: 'El grupo no existe' }] })
     }
 
     const existingGroupMember = await GroupMember.findOne({ where: { user_id, group_id } })
     if (existingGroupMember) {
-        return res.status(400).json({ errors: [{ msg: 'User is already a member of the group'}]})
+        return res.status(400).json({ errors: [{ msg: 'El usuario ya es miembro del grupo'}]})
     }
 
     const groupMember = await GroupMember.create({ user_id, group_id })
     if (!groupMember) {
-        return res.status(500).json({ errors: [{ msg: 'Failed to add user to group' }] })
+        return res.status(500).json({ errors: [{ msg: 'Error agregando usuario al grupo' }] })
     }
 
     return res.status(201).json(groupMember)
@@ -150,21 +150,21 @@ groupRoutes.patch('/members/:group_id/:user_id', validatePatchAdminGroup, async 
     
     const validGroup = await Group.findOne({ where: { id: group_id } })
     if (!validGroup) {
-        return res.status(400).json({ errors: [{ msg: 'Group does not exist' }] })
+        return res.status(400).json({ errors: [{ msg: 'El grupo no existe' }] })
     }
 
     const groupMember = await GroupMember.findOne({where: {group_id:group_id, user_id:user_id, pending:true}})
 
     if(!groupMember){
-        return res.status(400).json({ errors: [{ msg: 'No invitation for this group' }] })
+        return res.status(400).json({ errors: [{ msg: 'No hay invitaciones para este grupo' }] })
     }
 
     groupMember.pending = false;
     try{
         await groupMember.save();
-        return res.status(200).send({ message: "Invitation accepted" });
+        return res.status(200).send({ message: "Invitacion aceptada" });
     }catch(e) {
-        return res.status(500).send({ message: "Couldn save groupmember" });
+        return res.status(500).send({ message: "No se pudo cambiar el miembro del grupo" });
     }
 });
 
@@ -180,23 +180,23 @@ groupRoutes.delete('/members/:group_id/:user_id', validatePatchAdminGroup, async
 
     const validUser = await User.findOne({ where: { id: user_id } })
     if (!validUser) {
-        return res.status(400).json({ errors: [{ msg: 'User does not exist' }] })
+        return res.status(400).json({ errors: [{ msg: 'El usuario no existe' }] })
     }
     const validGroup = await Group.findOne({ where: { id: group_id } })
     if (!validGroup) {
-        return res.status(400).json({ errors: [{ msg: 'Group does not exist' }] })
+        return res.status(400).json({ errors: [{ msg: 'El grupo no existe' }] })
     }
 
     const groupMember = await GroupMember.findOne({ where: { user_id, group_id, pending: true } })
     if (!groupMember) {
-        return res.status(400).json({ errors: [{ msg: 'No invitation for this group' }] })
+        return res.status(400).json({ errors: [{ msg: 'No hay invitacion para este grupo' }] })
     }
     const deletedGroupMember = await groupMember.destroy()
     if (!deletedGroupMember) {
-        return res.status(500).json({ errors: [{ msg: 'Failed to delete the group invitation' }] })
+        return res.status(500).json({ errors: [{ msg: 'Fallo borrando la invitacion para este grupo' }] })
     }
 
-    return res.status(200).send({ message: 'Invitation Deleted'})
+    return res.status(200).send({ message: 'Invitacion borrada'})
 });
 
 
@@ -206,24 +206,24 @@ groupRoutes.delete('/:group_id/:user_id', validateGroupMemberOperation, async (r
 
     const validGroup = await Group.findOne({ where: { id: group_id } })
     if (!validGroup) {
-        return res.status(400).json({ errors: [{ msg: 'Group does not exist' }] })
+        return res.status(400).json({ errors: [{ msg: 'El grupo no existe' }] })
     }
 
     if (validGroup.admin_id == user_id) {
-        return res.status(403).json({ errors: [{ msg: 'Group admin cannot leave the group' }] })
+        return res.status(403).json({ errors: [{ msg: 'El administrador no puede abandonar el grupo' }] })
     }
 
     const groupMember = await GroupMember.findOne({ where: { user_id, group_id } })
     if (!groupMember) {
-        return res.status(404).json({ errors: [{ msg: 'Group member not found' }] })
+        return res.status(404).json({ errors: [{ msg: 'Miembro del grupo no encontrado' }] })
     }
 
     const deletedGroupMember = await groupMember.destroy()
     if (!deletedGroupMember) {
-        return res.status(500).json({ errors: [{ msg: 'Failed to delete group member' }] })
+        return res.status(500).json({ errors: [{ msg: 'Fallo al borrar el miembro del grupo' }] })
     }
 
-    return res.status(200).send({ message: 'Group member deleted'})
+    return res.status(200).send({ message: 'Se borro al miembro del grupo exitosamente'})
 })
 
 // groupRoutes.patch('/groups/:group_id', validatePatchGroupName, validatePatchGroupDescription ,async (req, res) => {
@@ -242,11 +242,11 @@ groupRoutes.patch('/:group_id', validatePatchGroup,async (req, res) => {
     const group = await Group.findOne({ where: { id: group_id } });
     
     if (!group) {
-        return res.status(404).send({ error: "Group not found" });
+        return res.status(404).send({ error: "Grupo no encontrado" });
     }
     
     if (group.admin_id != admin_id){
-        return res.status(403).send({ error: "You are not the admin of this group" });
+        return res.status(403).send({ error: "No eres el admin de este grupo" });
     }
 
     if (new_name) {
@@ -259,10 +259,10 @@ groupRoutes.patch('/:group_id', validatePatchGroup,async (req, res) => {
     
     try {
       await group.save();
-      return res.status(200).send({ message: "Group updated successfully" });
+      return res.status(200).send({ message: "Grupo actualizado exitosamente" });
     }
     catch (e) {
-      return res.status(500).send({ error: "Error while updating group" });
+      return res.status(500).send({ error: "Error al intentar actualizar el grupo" });
     } 
 
 });
@@ -284,35 +284,35 @@ groupRoutes.patch('/admins/:group_id/:user_id', validatePatchAdminGroup,async (r
     const group = await Group.findOne({ where: { id: group_id } });
     
     if (!group) {
-        return res.status(404).send({ error: "Group not found" });
+        return res.status(404).send({ error: "Grupo no encontrado" });
     }
 
     if (group.admin_id != user_id){
-        return res.status(403).send({ error: "You are not the admin of this group" });
+        return res.status(403).send({ error: "No eres el admin de este grupo" });
     }
 
     try {
         await User.findOne({ where: { id: new_admin_id } })
     }
     catch{
-        return res.status(400).json({ errors: [{ msg: 'New admin does not exist' }] })
+        return res.status(400).json({ errors: [{ msg: 'El nuevo admin no existe' }] })
     }
 
     try{
         await GroupMember.findOne({ where: { user_id: new_admin_id,group_id: group_id } })
     }
     catch{
-        return res.status(404).json({ errors: [{ msg: 'New admin does not belongs to this group' }] })
+        return res.status(404).json({ errors: [{ msg: 'El nuevo admin no pertenece a este grupo' }] })
     }
 
     group.admin_id = new_admin_id;
     
     try {
       await group.save();
-      return res.status(200).send({ message: "Group updated successfully" });
+      return res.status(200).send({ message: "Grupo actualizado exitosamente" });
     }
     catch (e) {
-      return res.status(500).send({ error: "Error while updating group" });
+      return res.status(500).send({ error: "Error al intentar actualizar el grupo" });
     } 
 
 });
@@ -329,7 +329,7 @@ groupRoutes.get('/member/:user_id', validateGetGroupsOfUser , async (req, res) =
     const user_groups = await GroupMember.findAll({ where: { user_id } });
     
     if (!user_groups) {
-      return res.status(404).send({ error: "User has no groups" });
+      return res.status(404).send({ error: "El usuario no tiene grupos" });
     }
 
     const groups_info_promises = user_groups.map(group => {
@@ -351,7 +351,7 @@ groupRoutes.get('/member/:user_id', validateGetGroupsOfUser , async (req, res) =
     const groups_info = await Promise.all(groups_info_promises);
 
     if(!groups_info){
-        return res.status(404).send({ error: "User has no groups" });
+        return res.status(404).send({ error: "El usuario no tiene grupos" });
     }
 
     return res.status(200).json(groups_info);
@@ -376,7 +376,7 @@ groupRoutes.get('/members/:group_id', validateGetGroupMembers, async (req, res) 
     });
 
     if (!group_members) {
-    return res.status(404).send({ error: "Group has no members" });
+    return res.status(404).send({ error: "El grupo no tiene miembros" });
     }
 
     return res.status(200).json(group_members);
