@@ -12,22 +12,27 @@ https://server-y9uq.onrender.com
 
 - **POST** /
 
-  - Crea un nuevo usuari.
-  - Body: { id: string , email: string, username: string }
+  - Crea un nuevo usuario.
+  - Body: { id: string , email: string, username: string, mp_alias: string}
 
 - **PATCH** /
 
-  - Actualiza el nombre de usuari.
+  - Actualiza el nombre de usuario.
   - Body: { user_id: string, new_username: string }
 
 - **GET** /:user_id
 
-  - Obtiene la información de un usuari.
+  - Obtiene la información de un usuario.
   - Params: user_id
 
 - **GET** /identification/:user_identification
   - Obtiene la información de usuarios que contienen userIndentification como username o emai.
   - Params: user_identification
+
+- **PATCH** /
+
+  - Actualiza el alias de mp de un usuario.
+  - Body: { user_id: string, new_mp_alias: string }
 
 ### Groups (/groups)
 

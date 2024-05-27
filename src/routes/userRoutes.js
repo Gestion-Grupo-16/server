@@ -22,6 +22,22 @@ const validatePatchUser = [
     .withMessage("New username must be a String")
 ];
 
+const validatePatchMPUser = [
+  body("user_id")
+  .notEmpty()
+  .withMessage("User id is required")
+  .bail()
+  .isString()
+  .withMessage("User id must be a String")
+  .bail(),
+  body("new_mp_alias")
+  .notEmpty()
+  .withMessage("New MP alias is required")
+  .bail()
+  .isString()
+  .withMessage("New MP alias must be a String")
+];
+
 
 const validateCreateUser = [
     body("id")
@@ -41,7 +57,7 @@ const validateCreateUser = [
     body("username")
         .notEmpty()
         .withMessage("Username is required")
-        .bail()        
+        .bail()
   ];
 
 
@@ -71,8 +87,20 @@ userRoutes.post('/',validateCreateUser , async (req,res) => {
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-    const { id, email, username } = req.body;
+    const { id, email, username, mp_alias } = req.body;
     
+    if (mp_alias !== undefined && typeof mp_alias !== 'string') {
+      return res.status(400).send({ error: "El Alias de MP debe ser un string" });
+  }
+
+    //si existe hay que chequear que sea unico en la bd
+    if (mp_alias) {
+      const mpAliasExists = await User.findOne({ where: { mp_alias } });
+      if (mpAliasExists) {
+        return res.status(409).send({ error: "El Alias de MP ya existe" });
+      }
+    }
+
     const idExists = await User.findOne({ where: { id } });
 
     if (idExists) {
@@ -90,6 +118,7 @@ userRoutes.post('/',validateCreateUser , async (req,res) => {
       id,
       username,
       email,
+      ...(mp_alias && { mp_alias }),
     });
     
     if (!newUser) {
@@ -124,6 +153,29 @@ userRoutes.patch('/', validatePatchUser, async (req, res) => {
 
 });
 
+userRoutes.patch('/', validatePatchMPUser, async (req, res) => {
+
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  const {user_id, new_mp_alias} = req.body;
+
+  const userExists = await User.findOne({ where: { id:user_id } });
+
+  if (!userExists) {
+    return res.status(409).send({ error: "Usuario no encontrado" });
+  }
+  userExists.mp_alias = new_mp_alias
+  try{
+    await userExists.save();
+  } catch (error) {
+    return res.status(500).send({ error: "Fallo al actualizar el alias" });
+  }
+  
+  return res.status(200).send({ message: "El alias se actualizo exitosamente" });
+
+});
 
 userRoutes.get('/:user_id',validateGetUser, async (req, res) => {
   console.log("GET /users/:user_id");

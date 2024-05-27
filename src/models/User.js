@@ -18,7 +18,12 @@ export const User = sequelize.define(
     email: {
       type: DataTypes.STRING,
       unique: true,
-    }
+    },
+    mp_alias: {
+      type: DataTypes.STRING,
+      unique: true, //deberia ser unico tambien 
+      allowNull: true,
+    },
   },
   { timestamps: false },
 );
