@@ -87,7 +87,9 @@ userRoutes.post('/',validateCreateUser , async (req,res) => {
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-    const { id, email, username, mp_alias } = req.body;
+    const { id, email, username } = req.body;
+
+    const mp_alias = req.body.mp_alias || undefined;
     
     if (mp_alias !== undefined && typeof mp_alias !== 'string') {
       return res.status(400).send({ error: "El Alias de MP debe ser un string" });
@@ -118,18 +120,18 @@ userRoutes.post('/',validateCreateUser , async (req,res) => {
       id,
       username,
       email,
-      ...(mp_alias && { mp_alias }),
+      mp_alias,
     });
     
     if (!newUser) {
       return res.status(500).send({ error: "Error creando al usuario" });
     }
 
-    res.status(201).send({id ,username, email});
+    res.status(201).send({id ,username, email, mp_alias});
 
 } );
 
-userRoutes.patch('/', validatePatchUser, async (req, res) => {
+userRoutes.patch('/username', validatePatchUser, async (req, res) => {
 
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -153,7 +155,7 @@ userRoutes.patch('/', validatePatchUser, async (req, res) => {
 
 });
 
-userRoutes.patch('/', validatePatchMPUser, async (req, res) => {
+userRoutes.patch('/mp_alias', validatePatchMPUser, async (req, res) => {
 
   const errors = validationResult(req);
   if (!errors.isEmpty()) {

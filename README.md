@@ -15,7 +15,7 @@ https://server-y9uq.onrender.com
   - Crea un nuevo usuario.
   - Body: { id: string , email: string, username: string, mp_alias: string}
 
-- **PATCH** /
+- **PATCH** /username
 
   - Actualiza el nombre de usuario.
   - Body: { user_id: string, new_username: string }
@@ -29,7 +29,7 @@ https://server-y9uq.onrender.com
   - Obtiene la información de usuarios que contienen userIndentification como username o emai.
   - Params: user_identification
 
-- **PATCH** /
+- **PATCH** /mp_alias
 
   - Actualiza el alias de mp de un usuario.
   - Body: { user_id: string, new_mp_alias: string }

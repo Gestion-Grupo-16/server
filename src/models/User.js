@@ -21,7 +21,7 @@ export const User = sequelize.define(
     },
     mp_alias: {
       type: DataTypes.STRING,
-      unique: true, //deberia ser unico tambien 
+      unique: true,
       allowNull: true,
     },
   },
