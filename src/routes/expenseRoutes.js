@@ -237,12 +237,12 @@ expenseRoutes.get('/balance/:group_id', async (req, res) => {
         return res.status(400).json({ errors: [{ msg: 'El grupo no existe' }] });
     }
 
-    const expenses = await IndividualExpense.findAll({ where: { group_id: group_id }});
-    
-    if (!expenses) {
+    const debts = await Debts.findAll({ where: { group_id: group_id }});
+
+    if (!debts) {
         return res.status(400).json({ errors: [{ msg: 'El grupo no tiene gastos individuales' }] })
     }
-    
+
     const group_members = await GroupMember.findAll({ 
         where: { group_id: group_id },
         include: [{
@@ -250,9 +250,9 @@ expenseRoutes.get('/balance/:group_id', async (req, res) => {
             attributes: ['id', 'username', 'email']
         }]
     });
-    
+
     let members = {};
-    
+
     for(const member of group_members){
         // console.log(member);    
         const user = member.user;
@@ -263,12 +263,13 @@ expenseRoutes.get('/balance/:group_id', async (req, res) => {
             balance: 0
         };
     }
-    // return res.status(200).json({ members});
-    let total_debt = 0;
-    
-    for (const expense of expenses){                
-        members[expense.user_id]["balance"] += expense.total_paid - expense.total_spent;
+
+    for (const debt of debts){
+        members[debt.debtor_id]["balance"] -= debt.amount_owed;
+        members[debt.creditor_id]["balance"] += debt.amount_owed;
     }
+
+    let total_debt = 0;
     
     for (const member in members){
         if(members[member]["balance"] < 0){
