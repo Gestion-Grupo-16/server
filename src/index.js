@@ -15,7 +15,7 @@ import groupRoutes from "./routes/groupRoutes.js";
 import expenseRoutes from "./routes/expenseRoutes.js";
 import debtsRoutes from "./routes/debtsRoutes.js";
 
-sequelize.sync({ force: true })
+// sequelize.sync({ force: true })
   
 const app = express();
 const port = 8721;
