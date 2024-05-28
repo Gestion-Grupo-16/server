@@ -3,6 +3,8 @@ import { body, param, validationResult } from "express-validator";
 import { User } from "../models/User.js";
 import { Group } from "../models/Group.js";
 import { GroupMember } from "../models/GroupMember.js";
+import { createDebts } from "../routes/debtsRoutes.js";
+
 
 const groupRoutes = express.Router();
 
@@ -158,6 +160,9 @@ groupRoutes.patch('/members/:group_id/:user_id', validatePatchAdminGroup, async 
     if(!groupMember){
         return res.status(400).json({ errors: [{ msg: 'No hay invitaciones para este grupo' }] })
     }
+
+    // Agregar la relación de deudas entre el nuevo integrantes y el resto de los integrantes del grupo
+    createDebts(group_id, user_id);
 
     groupMember.pending = false;
     try{

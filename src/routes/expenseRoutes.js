@@ -3,6 +3,7 @@ import { body, param, validationResult } from "express-validator";
 import { User } from "../models/User.js";
 import { Group } from "../models/Group.js";
 import { GroupMember } from "../models/GroupMember.js";
+import { modifyDebt } from "../routes/debtsRoutes.js";
 import { Expense,Categories,Currencies } from "../models/Expense.js";
 import {IndividualExpense} from "../models/IndividualExpense.js";
 
@@ -57,38 +58,57 @@ const validateGetGroupExpenses = [
 ];
 
 expenseRoutes.post('/:group_id', validateNewExpense, async (req, res) => {
-    const { group_id } = req.params
-    const { total_spent, category, currency, participants  } = req.body
+    const { group_id } = req.params;
+    const { total_spent, category, currency, participants  } = req.body;
     
     let spent = 0;
     let paid = 0;
+    let creditors = [];
+    let debtors = [];
+
     for (const participant of participants) {
         spent += participant.spent;
         paid += participant.paid;
+
+        if (participant.spent > participant.paid) {
+            
+            let newParticipant = participant;
+            newParticipant.spent = newParticipant.spent - newParticipant.paid;
+            newParticipant.paid = 0;
+            debtors.push(newParticipant);
+        }
+        else if (participant.spent < participant.paid) {
+
+            let newParticipant = participant;
+            newParticipant.paid = newParticipant.paid - newParticipant.spent;
+            newParticipant.spent = 0;
+            creditors.push(newParticipant);
+        }
     };
+    console.log(debtors);
+    console.log(creditors);
 
     if (spent !== total_spent || paid !== total_spent) {
         return res.status(400).json({ errors: [{ msg: 'El total gastado y el total pagado tienen que ser iguales a la suma de los gastos individuales' }] });
     }
     
-    const validGroup = await Group.findOne({ where: { id: group_id } })
+    const validGroup = await Group.findOne({ where: { id: group_id } });
     if (!validGroup) {
-        return res.status(400).json({ errors: [{ msg: 'El grupo no existe' }] })
+        return res.status(400).json({ errors: [{ msg: 'El grupo no existe' }] });
     }
-    const validCategory = Categories.includes(category)
+    const validCategory = Categories.includes(category);
     if (!validCategory) {
-        return res.status(400).json({ errors: [{ msg: 'Categoria invalida' }] })
+        return res.status(400).json({ errors: [{ msg: 'Categoria invalida' }] });
     }
     const expense = await Expense.create({ group_id, total_spent, category, currency });
 
-    var individualExpenses = []
+    var individualExpenses = [];
 
     for (const participant of participants) {
         if (!participant.hasOwnProperty('user_id') || !participant.hasOwnProperty('spent') || !participant.hasOwnProperty('paid')) {
             return res.status(400).json({ errors: [{ msg: 'Participante invalido: se requieren los campos user_id, spent o paid' }] });
         }
-        console.log(participant)
-        const validParticipant = await GroupMember.findOne({ where: { user_id: participant['user_id'], group_id: group_id } })
+        const validParticipant = await GroupMember.findOne({ where: { user_id: participant['user_id'], group_id: group_id } });
         if (!validParticipant) {
             console.log('Invalid participant!!!!');
             for (const createdIndividualExpenses of individualExpenses) {
@@ -100,6 +120,38 @@ expenseRoutes.post('/:group_id', validateNewExpense, async (req, res) => {
         const individualExpense = await IndividualExpense.create({ expense_id: expense.id, user_id: participant['user_id'], group_id: group_id, total_spent: participant['spent'], total_paid: participant['paid'] });
         individualExpenses.push(individualExpense);
     }
+    // Modificar la deuda entre los dos usuarios pertenecientes a la individual expense
+    console.log("\n\n" + "FOOOORR : " + "\n\n");
+    for (const creditor of creditors) {
+        
+        console.log("creditor", creditor);
+        if (creditor.paid  > 0) { 
+            for (const debtor of debtors) {
+                console.log("debtor", debtor);
+                if (debtor.spent > 0){
+                    if (debtor.spent < creditor.paid) {                        
+                        creditor.paid = creditor.paid - debtor.spent;
+                        console.log("se modifica la deuda 1: ", debtor.spent);
+                        modifyDebt(group_id, debtor.user_id, creditor.user_id, debtor.spent);
+                        debtor.spent = 0;
+                    }                                         
+                    else if (debtor.spent > creditor.paid){
+                        debtor.spent = debtor.spent - creditor.paid;
+                        console.log("se modifica la deuda 2: ", creditor.paid);
+                        modifyDebt(group_id, debtor.user_id, creditor.user_id, creditor.paid);
+                        creditor.paid = 0;
+                    }                     
+                    else {
+                        modifyDebt(group_id, debtor.user_id, creditor.user_id, debtor.spent);
+                        console.log("estamos a mano ");
+                        debtor.spent = 0;
+                        creditor.paid = 0;
+                    }
+                }
+            }
+        }
+    } 
+
     return res.status(201).json({ id: expense.id, group_id: group_id, total_spent, category, currency, participants });
   });
   

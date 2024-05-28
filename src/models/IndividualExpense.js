@@ -2,7 +2,7 @@ import { DataTypes } from "sequelize";
 import { sequelize } from "../database/database.js";
 
 export const IndividualExpense = sequelize.define(
-  "individualExpense",
+  "individual_expenses",
   {
     expense_id : {
       type: DataTypes.INTEGER,
