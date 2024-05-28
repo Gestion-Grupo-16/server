@@ -271,13 +271,12 @@ expenseRoutes.get('/balance/:group_id', async (req, res) => {
     }
     
     for (const member in members){
-        if(members[member] < 0){
-            total_debt += members[member];
+        if(members[member]["balance"] < 0){
+            total_debt += members[member]["balance"];
         }        
     }
     members = Object.entries(members).map(([id, content]) => ({id, ...content}))
     return res.status(200).json({"total_debt":total_debt, members});
-
 });
 
 

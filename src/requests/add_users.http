@@ -4,7 +4,7 @@ Content-Type: application/json
 {
     "id": "1",
     "email": "rberenguel@fi.uba.ar",
-    "username": "Rafa",
+    "username": "RafaB",
     "mp_alias": "RafaB"
 }
 
@@ -16,7 +16,7 @@ Content-Type: application/json
 {
     "id": "2",
     "email": "temanuel@fi.uba.ar",
-    "username": "Tomas",
+    "username": "TomasE",
     "mp_alias": "TomasE"
 }
 
@@ -28,7 +28,7 @@ Content-Type: application/json
 {
     "id": "3",
     "email": "sjaves@fi.uba.ar",
-    "username": "Sofia",
+    "username": "SofiaJ",
     "mp_alias": "SofiaJ"
 }
 
