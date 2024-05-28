@@ -66,47 +66,29 @@ async function modifyDebt(group_id, debtor_id, creditor_id, amount_owed){
     console.log("\n" + " modifyDebt | group_id : " + group_id + " | debtor : " + debtor_id + " | creditor : " + creditor_id + " | amount_owed : " + amount_owed + "\n" );
 
     let validGroup = null;
-    try {
-        console.log("valid group");
         
-        validGroup = await Group.findOne({ where: { id: group_id } });
-        console.log("0");
-    }         
-    catch (e) {
-        console.log("invalid group!!!!!!!!");
+    validGroup = await Group.findOne({ where: { id: group_id } });
+
+    if (!validGroup) {
         throw new Error('El grupo no existe');
     }
-
-
-    // if (!validGroup) {
-    //     console.log("invalid group!!!!!!!!");
-    //     throw new Error('El grupo no existe');
-    // }
-
-    console.log("1");
 
     const validDebtor = await GroupMember.findOne({ where: { group_id, user_id: debtor_id } });
     if (!validDebtor) {
         throw new Error('El deudor no pertenece a este grupo');
     }
 
-    console.log("2");
-
     const validCreditor = await GroupMember.findOne({ where: { group_id, user_id: creditor_id } });
     if (!validCreditor) {
         throw new Error('Acreedor no pertenece a este grupo');
     }
 
-    console.log("3");
-
     const updatedDebt = await Debts.findOne({ where: { group_id, debtor_id, creditor_id } });
     if (!updatedDebt) {
 
-        console.log("4");
-
         const updatedDebt = await Debts.findOne({ where: { group_id, debtor_id: creditor_id, creditor_id: debtor_id } });
         console.log("\n");
-        console.log("current debt", updatedDebt);
+        console.log("1. CURRENT DEBT ",  "| debtor : " + updatedDebt.debtor_id + " | creditor : " + updatedDebt.creditor_id + " | amount_owed : " + updatedDebt.amount_owed + "\n" );
         console.log("\n");
         if (!updatedDebt) {
             throw new Error('Error actualizando deuda');
@@ -114,19 +96,16 @@ async function modifyDebt(group_id, debtor_id, creditor_id, amount_owed){
 
         // El que debe, antes le debían (hay que hacer el balance y ver si dar vuelta los roles o no)
         else{
-            console.log("5");
 
             const balance = updatedDebt.amount_owed - amount_owed;
 
             if(balance > 0){
 
-                console.log("6");
-
                 updatedDebt.amount_owed = balance;
                 try {
                     await updatedDebt.save();
                     console.log("\n");
-                    console.log("update debt", updatedDebt);
+                    console.log("1a. UPDATE DEBT ",  "| debtor : " + updatedDebt.debtor_id + " | creditor : " + updatedDebt.creditor_id + " | amount_owed : " + updatedDebt.amount_owed + "\n" );
                     console.log("\n");
                     return;
                 }
@@ -137,22 +116,20 @@ async function modifyDebt(group_id, debtor_id, creditor_id, amount_owed){
             }
             else{
 
-                console.log("7");
-
                 try {                    
                     await updatedDebt.destroy();
-                    const debt = await Debts.create({ group_id, debtor_id: creditor_id, creditor_id: debtor_id, amount_owed: Math.abs(balance) });
+                    console.log("CREANDO NUEVA DEUDA : Debtor : ", creditor_id + " | Creditor : " + debtor_id + " | Nueva deuda : " + Math.abs(balance) + "\n");
+                    const debt = await Debts.create({ group_id, debtor_id, creditor_id, amount_owed: Math.abs(balance) });
                     if(!debt){
                         throw new Error('Error creando nueva deuda');
                     }
+                    console.log("\n");
+                    console.log("1b. UPDATE DEBT ",  "| debtor : " + debt.debtor_id + " | creditor : " + debt.creditor_id + " | amount_owed : " + debt.amount_owed + "\n" );
+                    console.log("\n");
                 }
                 catch (e) {
                     throw new Error('Error actualizando deuda');
                 } 
-
-                console.log("\n");
-                console.log("update debt", updatedDebt);
-                console.log("\n");
 
                 // console.log("creditor nuevo : " +  creditor_id + "\n debtor nuevo : " + debtor_id);                
                 // updatedDebt.debtor_id = debtor_id.toString();
@@ -169,7 +146,7 @@ async function modifyDebt(group_id, debtor_id, creditor_id, amount_owed){
     // El que debe, ya estaba debiendo (sumar las deudas y dejarlo como esta)
     else{
         console.log("\n");
-        console.log("current debt", updatedDebt);
+        console.log("2. CURRENT DEBT ",  "| debtor : " + updatedDebt.debtor_id + " | creditor : " + updatedDebt.creditor_id + " | amount_owed : " + updatedDebt.amount_owed + "\n" );
         console.log("\n");
 
         updatedDebt.amount_owed += amount_owed;
@@ -177,7 +154,7 @@ async function modifyDebt(group_id, debtor_id, creditor_id, amount_owed){
         try {
             await updatedDebt.save();
             console.log("\n");
-            console.log("update debt", updatedDebt);
+            console.log("2a. UPDATE DEBT ",  "| debtor : " + updatedDebt.debtor_id + " | creditor : " + updatedDebt.creditor_id + " | amount_owed : " + updatedDebt.amount_owed + "\n" );
             console.log("\n");
             return;
         }
