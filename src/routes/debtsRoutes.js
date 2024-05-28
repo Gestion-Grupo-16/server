@@ -63,8 +63,6 @@ async function createDebts(group_id, new_group_member){
 // Mover o usar esto cuando se crea un gasto
 async function modifyDebt(group_id, debtor_id, creditor_id, amount_owed){
 
-    console.log("\n" + " modifyDebt | group_id : " + group_id + " | debtor : " + debtor_id + " | creditor : " + creditor_id + " | amount_owed : " + amount_owed + "\n" );
-
     let validGroup = null;
         
     validGroup = await Group.findOne({ where: { id: group_id } });
@@ -87,9 +85,7 @@ async function modifyDebt(group_id, debtor_id, creditor_id, amount_owed){
     if (!updatedDebt) {
 
         const updatedDebt = await Debts.findOne({ where: { group_id, debtor_id: creditor_id, creditor_id: debtor_id } });
-        console.log("\n");
-        console.log("1. CURRENT DEBT ",  "| debtor : " + updatedDebt.debtor_id + " | creditor : " + updatedDebt.creditor_id + " | amount_owed : " + updatedDebt.amount_owed + "\n" );
-        console.log("\n");
+
         if (!updatedDebt) {
             throw new Error('Error actualizando deuda');
         }
@@ -104,9 +100,6 @@ async function modifyDebt(group_id, debtor_id, creditor_id, amount_owed){
                 updatedDebt.amount_owed = balance;
                 try {
                     await updatedDebt.save();
-                    console.log("\n");
-                    console.log("1a. UPDATE DEBT ",  "| debtor : " + updatedDebt.debtor_id + " | creditor : " + updatedDebt.creditor_id + " | amount_owed : " + updatedDebt.amount_owed + "\n" );
-                    console.log("\n");
                     return;
                 }
                 catch (e) {
@@ -118,44 +111,24 @@ async function modifyDebt(group_id, debtor_id, creditor_id, amount_owed){
 
                 try {                    
                     await updatedDebt.destroy();
-                    console.log("CREANDO NUEVA DEUDA : Debtor : ", creditor_id + " | Creditor : " + debtor_id + " | Nueva deuda : " + Math.abs(balance) + "\n");
                     const debt = await Debts.create({ group_id, debtor_id, creditor_id, amount_owed: Math.abs(balance) });
                     if(!debt){
                         throw new Error('Error creando nueva deuda');
                     }
-                    console.log("\n");
-                    console.log("1b. UPDATE DEBT ",  "| debtor : " + debt.debtor_id + " | creditor : " + debt.creditor_id + " | amount_owed : " + debt.amount_owed + "\n" );
-                    console.log("\n");
                 }
                 catch (e) {
                     throw new Error('Error actualizando deuda');
                 } 
-
-                // console.log("creditor nuevo : " +  creditor_id + "\n debtor nuevo : " + debtor_id);                
-                // updatedDebt.debtor_id = debtor_id.toString();
-                // updatedDebt.creditor_id = creditor_id.toString();
-                
-                // console.log("Nuevo debt:");
-                // console.log(updatedDebt);
-                
                 return;
-
             }
         }
     }
     // El que debe, ya estaba debiendo (sumar las deudas y dejarlo como esta)
     else{
-        console.log("\n");
-        console.log("2. CURRENT DEBT ",  "| debtor : " + updatedDebt.debtor_id + " | creditor : " + updatedDebt.creditor_id + " | amount_owed : " + updatedDebt.amount_owed + "\n" );
-        console.log("\n");
-
         updatedDebt.amount_owed += amount_owed;
 
         try {
             await updatedDebt.save();
-            console.log("\n");
-            console.log("2a. UPDATE DEBT ",  "| debtor : " + updatedDebt.debtor_id + " | creditor : " + updatedDebt.creditor_id + " | amount_owed : " + updatedDebt.amount_owed + "\n" );
-            console.log("\n");
             return;
         }
         catch (e) {

@@ -110,7 +110,6 @@ expenseRoutes.post('/:group_id', validateNewExpense, async (req, res) => {
         }
         const validParticipant = await GroupMember.findOne({ where: { user_id: participant['user_id'], group_id: group_id } });
         if (!validParticipant) {
-            console.log('Invalid participant!!!!');
             for (const createdIndividualExpenses of individualExpenses) {
                 await createdIndividualExpenses.destroy();
             }
@@ -121,29 +120,23 @@ expenseRoutes.post('/:group_id', validateNewExpense, async (req, res) => {
         individualExpenses.push(individualExpense);
     }
     // Modificar la deuda entre los dos usuarios pertenecientes a la individual expense
-    console.log("\n\n" + "FOOOORR : " + "\n\n");
     for (const creditor of creditors) {
         
-        console.log("creditor", creditor);
         if (creditor.paid  > 0) { 
             for (const debtor of debtors) {
-                console.log("debtor", debtor);
                 if (debtor.spent > 0){
                     if (debtor.spent < creditor.paid) {                        
                         creditor.paid = creditor.paid - debtor.spent;
-                        console.log("se modifica la deuda 1: ", debtor.spent);
                         modifyDebt(group_id, debtor.user_id, creditor.user_id, debtor.spent);
                         debtor.spent = 0;
                     }                                         
                     else if (debtor.spent > creditor.paid){
                         debtor.spent = debtor.spent - creditor.paid;
-                        console.log("se modifica la deuda 2: ", creditor.paid);
                         modifyDebt(group_id, debtor.user_id, creditor.user_id, creditor.paid);
                         creditor.paid = 0;
                     }                     
                     else {
                         modifyDebt(group_id, debtor.user_id, creditor.user_id, debtor.spent);
-                        console.log("estamos a mano ");
                         debtor.spent = 0;
                         creditor.paid = 0;
                     }
