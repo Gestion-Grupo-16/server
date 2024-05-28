@@ -59,6 +59,24 @@ const validateGetGroupExpenses = [
     .bail()
 ];
 
+const validatePayDebts = [
+    param('group_id')
+        .notEmpty()
+        .withMessage('Group id is required')
+        .bail()
+        .isInt()
+        .withMessage('Group id must be an integer')
+        .bail(),
+    body("debtor_id")
+        .notEmpty()
+        .withMessage("Debtor id is required")
+        .bail(),    
+    param("creditor_id")
+        .notEmpty()
+        .withMessage("Creditor id is required")
+        .bail(),
+];
+
 expenseRoutes.post('/:group_id', validateNewExpense, async (req, res) => {
     const { group_id } = req.params;
     const { total_spent, category, currency, participants  } = req.body;
@@ -280,6 +298,45 @@ expenseRoutes.get('/balance/:group_id', async (req, res) => {
 
 });
 
+expenseRoutes.patch('/debts/:group_id/:creditor_id', validatePayDebts, async (req, res) => {
+
+    const { group_id, creditor_id } = req.params
+    const { debtor_id } = req.body
+
+    const validGroup = await Group.findOne({ where: { id: group_id } })
+    if (!validGroup) {
+        return res.status(400).json({ errors: [{ msg: 'El grupo no existe' }] })
+    }
+
+    const validDebtor = await GroupMember.findOne({ where: { group_id, user_id: debtor_id } })
+    if (!validDebtor) {
+        return res.status(400).json({ errors: [{ msg: 'El deudor no pertenece a este grupo' }] })
+    }
+
+    const validCreditor = await GroupMember.findOne({ where: { group_id, user_id: creditor_id } })
+    if (!validCreditor) {
+        return res.status(400).json({ errors: [{ msg: 'El acreedor no pertenece a este grupo' }] })
+    }
+
+    const updatedDebt = await Debts.findOne({ where: { group_id, debtor_id, creditor_id } })
+    if (!updatedDebt) {
+        return res.status(500).send({ error: "Error encontrando deuda" });
+    }
+    if (updatedDebt.amount_owed === 0 || updatedDebt.amount_owed < 0) {
+        return res.status(400).send({ error: "No hay deuda que pagar" });
+    }
+
+    updatedDebt.amount_owed = 0;
+
+    try {
+        await updatedDebt.save();
+        return res.status(200).send({ message: "Deuda pagada exitosamente" });
+    }
+    catch (e) {
+        return res.status(500).send({ error: "Error pagando deuda" });
+    }
+}
+);
 
 expenseRoutes.get('/options/categories', async (req, res) => {
     return res.status(200).json(Categories);
