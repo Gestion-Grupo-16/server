@@ -6,7 +6,9 @@ import { GroupMember } from "../models/GroupMember.js";
 import { modifyDebt } from "../routes/debtsRoutes.js";
 import { Expense,Categories,Currencies } from "../models/Expense.js";
 import {IndividualExpense} from "../models/IndividualExpense.js";
+import { Debts } from "../models/Debts.js";
 
+import { Op } from "sequelize";
 
 const expenseRoutes = express.Router();
 
@@ -164,6 +166,41 @@ expenseRoutes.get('/:group_id', validateGetGroupExpenses, async (req, res) => {
     }
 
     return res.status(200).json(validExpenses);
+});
+
+expenseRoutes.get('/debts/:group_id/:user_id', validateGetGroupExpenses, async (req, res) => {
+    const { group_id, user_id } = req.params
+
+    const validGroup = await Group.findOne({ where: { id: group_id } })
+    if (!validGroup) {
+        return res.status(400).json({ errors: [{ msg: 'El grupo no existe' }] })
+    }
+
+    const validUser = await User.findOne({ where: { id: user_id } })
+    if (!validUser) {
+        return res.status(400).json({ errors: [{ msg: 'El usuario no existe' }] })
+    }
+
+    const validGroupMember = await GroupMember.findOne({ where: { group_id, user_id } });
+    if (!validGroupMember) {
+        throw new Error('El usuario no pertenece a este grupo');
+    }
+
+    const validDebts = await Debts.findAll({
+    where: {
+        group_id: group_id,
+        [Op.or]: [
+        { debtor_id: user_id },
+        { creditor_id: user_id }
+        ]
+    }
+    });
+
+    if (!validDebts) {
+        return res.status(400).json({ errors: [{ msg: 'El grupo no tiene gastos' }] })
+    }
+
+    return res.status(200).json(validDebts);
 });
 
 expenseRoutes.get('/individual/:group_id', validateGetGroupExpenses, async (req, res) => {

@@ -120,6 +120,11 @@ https://server-y9uq.onrender.com
   - Obtiene las monedas en las que puede estar expresado un gasto.
   - Params: -
 
+- **GET** /debts/:group_id/:user_id
+
+  - Obtiene las debts de un usuario en un grupo con el resto de los miembros
+  - Params: group_id, user_id
+
 ### Debts (/debts)
 
 - **POST** /
