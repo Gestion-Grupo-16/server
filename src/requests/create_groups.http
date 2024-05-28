@@ -1,0 +1,51 @@
+POST http://localhost:8721/groups
+Content-Type: application/json
+
+{
+    "name": "Grupo 1",
+    "user_id": "1",
+    "description": "Grupito 1"
+}
+
+###
+
+POST http://localhost:8721/groups
+Content-Type: application/json
+
+{
+    "name": "Grupo 2",
+    "user_id": "4",
+    "description": "Grupito 2"
+}
+
+###
+POST http://localhost:8721/groups/members/1/2
+Content-Type: application/json
+
+###
+PATCH http://localhost:8721/groups/members/1/2
+Content-Type: application/json
+
+###
+POST http://localhost:8721/groups/members/1/3
+Content-Type: application/json
+
+###
+PATCH http://localhost:8721/groups/members/1/3
+Content-Type: application/json
+
+###
+POST http://localhost:8721/groups/members/2/5
+Content-Type: application/json
+
+###
+PATCH http://localhost:8721/groups/members/2/5
+Content-Type: application/json
+
+###
+POST http://localhost:8721/groups/members/2/6
+Content-Type: application/json
+
+###
+PATCH http://localhost:8721/groups/members/2/6
+Content-Type: application/json

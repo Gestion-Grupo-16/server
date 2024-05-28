@@ -1,0 +1,66 @@
+POST http://localhost:8721/users
+Content-Type: application/json
+
+{
+    "id": "1",
+    "email": "rberenguel@fi.uba.ar",
+    "username": "Rafa",
+    "mp_alias": "RafaB"
+}
+
+###
+
+POST http://localhost:8721/users
+Content-Type: application/json
+
+{
+    "id": "2",
+    "email": "temanuel@fi.uba.ar",
+    "username": "Tomas",
+    "mp_alias": "TomasE"
+}
+
+###
+
+POST http://localhost:8721/users
+Content-Type: application/json
+	
+{
+    "id": "3",
+    "email": "sjaves@fi.uba.ar",
+    "username": "Sofia",
+    "mp_alias": "SofiaJ"
+}
+
+###
+
+POST http://localhost:8721/users
+Content-Type: application/json
+
+{
+    "id": "4",
+    "email": "fgazolla@fi.uba.ar",
+    "username": "FracoG"
+}
+
+###
+
+POST http://localhost:8721/users
+Content-Type: application/json
+
+{
+    "id": "5",
+    "email": "mburstein@fi.uba.ar",
+    "username": "MaguiB"
+}
+
+###
+
+POST http://localhost:8721/users
+Content-Type: application/json
+
+{
+    "id": "6",
+    "email": "afabregas@fi.uba.ar",
+    "username": "AlejoF"
+}
