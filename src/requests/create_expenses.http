@@ -1,0 +1,76 @@
+POST http://localhost:8721/expenses/1
+Content-Type: application/json
+
+{
+    "total_spent": 1000,
+    "category": "Comida",
+    "currency": "ARS",
+    "participants": [
+        {
+            "user_id": "1",
+            "spent": 300,
+            "paid": 800
+        },
+        {
+            "user_id": "2",
+            "spent": 300,
+            "paid": 100
+        },
+        {
+            "user_id": "3",
+            "spent": 400,
+            "paid": 100
+        }
+    ]
+}
+
+###
+
+POST http://localhost:8721/expenses/1
+Content-Type: application/json
+
+{
+    "total_spent": 500,
+    "category": "Comida",
+    "currency": "ARS",
+    "participants": [
+        {
+            "user_id": "2",
+            "spent": 200,
+            "paid": 300
+        },
+        {
+            "user_id": "3",
+            "spent": 300,
+            "paid": 200
+        }
+    ]
+}
+
+###
+
+POST http://localhost:8721/expenses/2
+Content-Type: application/json
+
+{
+    "total_spent": 1500,
+    "category": "Comida",
+    "currency": "ARS",
+    "participants": [
+        {
+            "user_id": "4",
+            "spent": 300,
+            "paid": 800
+        },
+        {
+            "user_id": "5",
+            "spent": 300,
+            "paid": 600
+        },
+        {
+            "user_id": "6",
+            "spent": 900,
+            "paid": 100
+        }
+    ]
+}
