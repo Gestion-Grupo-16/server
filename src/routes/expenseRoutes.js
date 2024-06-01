@@ -345,6 +345,31 @@ expenseRoutes.get('/options/categories', async (req, res) => {
 expenseRoutes.get('/options/currencies', async (req, res) => {
     return res.status(200).json(Currencies);
 });
+expenseRoutes.get('/:group_id/categories', async (req, res) => {
+    const { categories } = req.body;
+    const { group_id } = req.params;
+    let total_spent = 0;
+    let arrayExpenses = [];
+
+    try {
+        for (const category of categories) {
+
+            if (!Categories.includes(category)) {
+                return res.status(400).json({ errors: [{ msg: 'Categoría inexistente' }] });
+            }
+
+            const validExpenses = await Expense.findAll({ where: { category: category, group_id: group_id } });
+            for (const valExpenses of validExpenses) {
+                total_spent += valExpenses.total_spent;
+                arrayExpenses = arrayExpenses.concat(valExpenses);
+            }
+        }
+    } catch (error) {
+        return res.status(400).json({ errors: [{ msg: 'Error al buscar gastos por categorías' }] });
+    }
+
+    return res.status(200).json({ total_spent, arrayExpenses });
+});
 
 
 

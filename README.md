@@ -115,6 +115,13 @@ https://server-y9uq.onrender.com
   - Obtiene las categorias a las que puede pertenecer un gasto .
   - Params: -
 
+- **GET** /:group_id/categories
+
+  - Obtiene listado de gastos por una o más categorías seleccionadas de un grupo, y el total gastado de estos
+  - Params: group_id
+  - Body: {categories: Array<String>}
+  - Array de categories : {'Transporte', 'Salud'}
+
 - **GET** /options/currencies
 
   - Obtiene las monedas en las que puede estar expresado un gasto.
