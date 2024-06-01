@@ -61,7 +61,16 @@ const validateCreateGroup = [
     body("name")
     .notEmpty()
     .withMessage("Group name is required")
+    .bail(),
+    body("budget")
+    .notEmpty()
+    .withMessage("Group budget is required")
     .bail()
+    .isInt()
+    .withMessage("Group budget must be an integer")
+    .bail()
+
+
 ];
 
 const validateGroupMemberOperation = [
@@ -92,12 +101,14 @@ groupRoutes.post('/',validateCreateGroup , async (req, res) => {
 
     const description = req.body.description || `Group ${name}`;
 
+    const budget = req.body.budget || -1;
+
     const user = await User.findOne({ where: { id: user_id } });
     if (!user) {
         return res.status(404).send({ error: "Usuario no encontrado" });
     }  
     
-    const group = await Group.create({name: name, admin_id: user_id, description: description, budget: -1});
+    const group = await Group.create({name: name, admin_id: user_id, description: description, budget: budget});
     if (!group) {
         return res.status(500).send({ error: "Error creando el grupo" });
     }

@@ -356,7 +356,7 @@ expenseRoutes.get('/options/categories', async (req, res) => {
 expenseRoutes.get('/options/currencies', async (req, res) => {
     return res.status(200).json(Currencies);
 });
-expenseRoutes.get('/:group_id/categories', async (req, res) => {
+expenseRoutes.put('/:group_id/categories', async (req, res) => {
     const { categories } = req.body;
     const { group_id } = req.params;
     let total_spent = 0;
