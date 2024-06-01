@@ -251,8 +251,6 @@ expenseRoutes.get('/individual/:group_id', validateGetGroupExpenses, async (req,
         individualExpense.dataValues.user = user;
     }
     
-    console.log(validIndividualExpenses);
-
     return res.status(200).json(validIndividualExpenses);
 });
 
@@ -356,15 +354,16 @@ expenseRoutes.get('/options/categories', async (req, res) => {
 expenseRoutes.get('/options/currencies', async (req, res) => {
     return res.status(200).json(Currencies);
 });
-expenseRoutes.get('/:group_id/categories', async (req, res) => {
+expenseRoutes.put('/:group_id/categories', async (req, res) => {
     const { categories } = req.body;
     const { group_id } = req.params;
+
     let total_spent = 0;
     let arrayExpenses = [];
+    let arrayIndividualExpenses = [];
 
     try {
         for (const category of categories) {
-
             if (!Categories.includes(category)) {
                 return res.status(400).json({ errors: [{ msg: 'Categoría inexistente' }] });
             }
@@ -375,12 +374,27 @@ expenseRoutes.get('/:group_id/categories', async (req, res) => {
                 arrayExpenses = arrayExpenses.concat(valExpenses);
             }
         }
+
+        for (const expense of arrayExpenses) {
+            const individualExpenses = await IndividualExpense.findAll({ where: { expense_id: expense.id } });
+            if (!individualExpenses) {
+                return res.status(400).json({ errors: [{ msg: 'El grupo no tiene gastos individuales' }] });
+            }
+            arrayIndividualExpenses = arrayIndividualExpenses.concat(expense);
+            for (const indExpense of individualExpenses) {
+                arrayIndividualExpenses = arrayIndividualExpenses.concat(indExpense);
+            }
+            
+        }
+
     } catch (error) {
-        return res.status(400).json({ errors: [{ msg: 'Error al buscar gastos por categorías' }] });
+        console.error(error);
+        return res.status(500).json({ errors: [{ msg: 'Error al buscar gastos por categorías' }] });
     }
 
-    return res.status(200).json({ total_spent, arrayExpenses });
+    return res.status(200).json({ total_spent, arrayIndividualExpenses });
 });
+
 
 
 
