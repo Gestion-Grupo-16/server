@@ -2,6 +2,7 @@ import express from "express";
 import { body, param, validationResult } from "express-validator";
 import { User } from "../models/User.js";
 import { Group } from "../models/Group.js";
+import { Expense } from "../models/Expense.js";
 import { GroupMember } from "../models/GroupMember.js";
 import { createDebts } from "../routes/debtsRoutes.js";
 
@@ -96,7 +97,7 @@ groupRoutes.post('/',validateCreateGroup , async (req, res) => {
         return res.status(404).send({ error: "Usuario no encontrado" });
     }  
     
-    const group = await Group.create({name: name, admin_id: user_id, description: description});
+    const group = await Group.create({name: name, admin_id: user_id, description: description, budget: -1});
     if (!group) {
         return res.status(500).send({ error: "Error creando el grupo" });
     }
@@ -171,6 +172,55 @@ groupRoutes.patch('/members/:group_id/:user_id', validatePatchAdminGroup, async 
     }catch(e) {
         return res.status(500).send({ message: "No se pudo cambiar el miembro del grupo" });
     }
+});
+
+groupRoutes.patch('/:group_id/:user_id/budget', validatePatchAdminGroup, async (req, res) => {
+
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() })
+    }
+    const { group_id, user_id } = req.params
+    const { new_budget } = req.body
+    
+    const validGroup = await Group.findOne({ where: { id: group_id } })
+    if (!validGroup) {
+        return res.status(400).json({ errors: [{ msg: 'El grupo no existe' }] })
+    }
+
+    const groupMember = await GroupMember.findOne({where: {group_id:group_id, user_id:user_id, pending:false}})
+    if(!groupMember){
+        return res.status(400).json({ errors: [{ msg: 'No hay invitaciones para este grupo' }] })
+    }
+
+    var total_spent = 0;
+
+    try{
+        const validExpenses = await Expense.findAll({ where: { group_id: group_id } });
+        for (const valExpenses of validExpenses) {
+            total_spent += valExpenses.total_spent;
+        }
+    }
+    catch{
+        return res.status(400).send({ error: "Error: al encontrar todos los gastos" });
+    }
+
+    if (total_spent > new_budget){
+        return res.status(400).send({ error: "Error:el presupuesto debe ser mayor que lo gastado" });
+    }
+    else if (new_budget < 0) {
+        return res.status(400).send({ error: "Error:el presupuesto debe ser mayor a 0" });
+    }
+
+    validGroup.budget = new_budget;
+
+    try {
+      await validGroup.save();
+      return res.status(200).send({ message: "Presupuesto Actualizado" });
+    }
+    catch (e) {
+      return res.status(500).send({ error: "Error al intentar actualizar el presupuesto del grupo" });
+    } 
 });
 
 
@@ -385,21 +435,37 @@ groupRoutes.get('/members/:group_id', validateGetGroupMembers, async (req, res) 
     }
 
     return res.status(200).json(group_members);
+});
 
-    // const group_id = req.params.group_id;
-    // const group_members = await GroupMember.findAll({ where: { group_id } });
+groupRoutes.get('/:group_id/budget', validateGetGroupMembers, async (req, res) => {
+
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() })
+    }
+    const { group_id } = req.params
     
-    // if (!group_members) {
-    //   return res.status(404).send({ error: "Group has no members" });
-    // }
+    const validGroup = await Group.findOne({ where: { id: group_id } })
+    if (!validGroup) {
+        return res.status(400).json({ errors: [{ msg: 'El grupo no existe' }] })
+    }
 
-    // const members_info_promises = group_members.map(member => {
-    //   return User.findOne({ where: { id: member.user_id } });
-    // });
+    var total_spent = 0;
+    try{
+        const validExpenses = await Expense.findAll({ where: { group_id: group_id } });
+        for (const valExpenses of validExpenses) {
+            total_spent += valExpenses.total_spent;
+        }
+    }
+    catch{
+        return res.status(400).send({ error: "Error: al encontrar todos los gastos" });
+    }
 
-    // const members_info = await Promise.all(members_info_promises);
+    const group_budget = validGroup.budget;
+    const dif_budget = group_budget - total_spent;
 
-    // return res.status(200).json(members_info);
+    
+    return res.status(200).json({group_budget : group_budget, total_spent : total_spent, dif_budget : dif_budget});
 });
 
 export default groupRoutes;

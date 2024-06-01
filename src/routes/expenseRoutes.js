@@ -81,6 +81,21 @@ expenseRoutes.post('/:group_id', validateNewExpense, async (req, res) => {
     const { group_id } = req.params;
     const { total_spent, category, currency, participants  } = req.body;
     
+    const validGroup = await Group.findOne({ where: { id: group_id } });
+    if (!validGroup) {
+        return res.status(400).json({ errors: [{ msg: 'El grupo no existe' }] });
+    }
+
+    var cumulative_total_spent = 0;
+    const validExpenses = await Expense.findAll({ where: { group_id: group_id } });
+    for (const valExpenses of validExpenses) {
+        cumulative_total_spent += valExpenses.total_spent;
+    }
+
+    if ((cumulative_total_spent + total_spent) > validGroup.budget){
+        return res.status(403).send({ error: "Error: el nuevo gasto excede el presupuesto" });
+    }
+    
     let spent = 0;
     let paid = 0;
     let creditors = [];
@@ -112,10 +127,6 @@ expenseRoutes.post('/:group_id', validateNewExpense, async (req, res) => {
         return res.status(400).json({ errors: [{ msg: 'El total gastado y el total pagado tienen que ser iguales a la suma de los gastos individuales' }] });
     }
     
-    const validGroup = await Group.findOne({ where: { id: group_id } });
-    if (!validGroup) {
-        return res.status(400).json({ errors: [{ msg: 'El grupo no existe' }] });
-    }
     const validCategory = Categories.includes(category);
     if (!validCategory) {
         return res.status(400).json({ errors: [{ msg: 'Categoria invalida' }] });

@@ -68,6 +68,11 @@ https://server-y9uq.onrender.com
   - Obtiene los grupos de un usuario.
   - Params: user_id
 
+- **GET** /:group_id/budget
+
+  - Obtiene el presupuesto del grupo, el total gastado hasta el momento y lo que sobra para gastar
+  - Params: group_id
+
 - **PATCH** /:group_id
 
   - Actualiza el nombre y la descripción de un grupo.

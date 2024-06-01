@@ -21,6 +21,9 @@ export const Group = sequelize.define(
       type:DataTypes.STRING,
       unique: false,
       foreignKey: true,
+    },
+    budget: {
+      type:DataTypes.INTEGER,
     }
   },
   { timestamps: false },
