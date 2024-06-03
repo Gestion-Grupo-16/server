@@ -101,7 +101,8 @@ groupRoutes.post('/',validateCreateGroup , async (req, res) => {
 
     const description = req.body.description || `Group ${name}`;
 
-    const budget = req.body.budget || -1;
+    const budget = req.body.budget;
+    console.log("budget", budget);
 
     const user = await User.findOne({ where: { id: user_id } });
     if (!user) {
