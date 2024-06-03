@@ -100,6 +100,13 @@ https://server-y9uq.onrender.com
   - Body: { total_spent: float, category: String, currency: String, participants: Array<Hash> }
   - Array de participants: [ {"user_id": "id_user1", "spent": 100, "paid": 200}, ... ]
 
+- **PUT** /:groupd_id/:expense_id
+
+  - Actualiza la información de un gasto
+  - Params: group_id
+  - Body: { total_spent: float, category: String, currency: String, participants: Array<Hash> }
+  - Array de participants: [ {"user_id": "id_user1", "spent": 100, "paid": 200}, ... ]
+
 - **GET** /:group_id
 
   - Obtiene los gastos de un grupo .

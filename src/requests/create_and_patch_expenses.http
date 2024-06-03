@@ -1,0 +1,138 @@
+POST http://localhost:8721/expenses/1
+Content-Type: application/json
+
+{
+    "total_spent": 1100,
+    "category": "Comida",
+    "currency": "ARS",
+    "participants": [
+        {
+            "user_id": "1",
+            "spent": 1000,
+            "paid": 500
+        },
+        {
+            "user_id": "2",
+            "spent": 100,
+            "paid": 300
+        },
+        {
+            "user_id": "3",
+            "spent": 0,
+            "paid": 300
+        }
+    ]
+}
+
+### 
+POST http://localhost:8721/expenses/1
+Content-Type: application/json
+
+{
+    "total_spent": 200,
+    "category": "Comida",
+    "currency": "ARS",
+    "participants": [
+        {
+            "user_id": "1",
+            "spent": 200,
+            "paid": 0
+        },
+        {
+            "user_id": "2",
+            "spent": 0,
+            "paid": 200
+        }
+    ]
+}
+
+###
+PUT http://localhost:8721/expenses/1/1
+Content-Type: application/json
+
+{
+    "total_spent": 1300,
+    "category": "Comida",
+    "currency": "ARS",
+    "participants": [
+        {
+            "user_id": "1",
+            "spent": 500,
+            "paid": 700
+        },
+        {
+            "user_id": "2",
+            "spent": 400,
+            "paid": 300
+        },
+        {
+            "user_id": "3",
+            "spent": 400,
+            "paid": 300
+        }
+    ]
+}
+
+###
+POST http://localhost:8721/expenses/2
+Content-Type: application/json
+
+{
+    "total_spent": 1200,
+    "category": "Comida",
+    "currency": "ARS",
+    "participants": [
+        {
+            "user_id": "4",
+            "spent": 700,
+            "paid": 500
+        },
+        {
+            "user_id": "5",
+            "spent": 100,
+            "paid": 300
+        },
+        {
+            "user_id": "6",
+            "spent": 200,
+            "paid": 400
+        },
+        {
+            "user_id": "7",
+            "spent": 200,
+            "paid": 0
+        }
+    ]
+}
+
+###
+PUT http://localhost:8721/expenses/2/1
+Content-Type: application/json
+
+{
+    "total_spent": 1200,
+    "category": "Comida",
+    "currency": "ARS",
+    "participants": [
+        {
+            "user_id": "4",
+            "spent": 200,
+            "paid": 800
+        },
+        {
+            "user_id": "5",
+            "spent": 300,
+            "paid": 400
+        },
+        {
+            "user_id": "6",
+            "spent": 400,
+            "paid": 0
+        },
+        {
+            "user_id": "7",
+            "spent": 300,
+            "paid": 0
+        }
+    ]
+}

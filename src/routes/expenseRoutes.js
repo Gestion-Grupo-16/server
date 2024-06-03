@@ -77,6 +77,51 @@ const validatePayDebts = [
         .bail(),
 ];
 
+const validatePatchGroupExpenses = [
+    param('group_id')
+        .notEmpty()
+        .withMessage('Group id is required')
+        .bail()
+        .isInt()
+        .withMessage('Group id must be an integer')
+        .bail(),
+    param('expense_id')
+        .notEmpty()
+        .withMessage('Expense id is required')
+        .bail()
+        .isInt()
+        .withMessage('Expense id must be an integer')
+        .bail(),
+    body('total_spent')
+        .notEmpty()
+        .withMessage('Total spent is required')
+        .bail()
+        .isFloat()
+        .withMessage('Total spent must be a float')
+        .bail(),
+    body('category')
+        .notEmpty()
+        .withMessage('Category is required')
+        .bail()
+        .isString()
+        .withMessage('Category must be a string')
+        .bail(),
+    body('currency')
+        .notEmpty()
+        .withMessage('Currency is required')
+        .bail()
+        .isString()
+        .withMessage('Currency must be a string')
+        .bail(),
+    body('participants')
+        .notEmpty()
+        .withMessage('Participants are required')
+        .bail()
+        .isArray()
+        .withMessage('Participants must be an array')
+        .bail()
+]
+
 expenseRoutes.post('/:group_id', validateNewExpense, async (req, res) => {
     const { group_id } = req.params;
     const { total_spent, category, currency, participants  } = req.body;
@@ -92,7 +137,7 @@ expenseRoutes.post('/:group_id', validateNewExpense, async (req, res) => {
         cumulative_total_spent += valExpenses.total_spent;
     }
 
-    if ((cumulative_total_spent + total_spent) > validGroup.budget){
+    if (validGroup.budget > 0 && (cumulative_total_spent + total_spent) > validGroup.budget){
         return res.status(403).send({ error: "Error: el nuevo gasto excede el presupuesto" });
     }
     
@@ -151,6 +196,10 @@ expenseRoutes.post('/:group_id', validateNewExpense, async (req, res) => {
         individualExpenses.push(individualExpense);
     }
     // Modificar la deuda entre los dos usuarios pertenecientes a la individual expense
+
+    creditors.sort((a, b) => b.user_id - a.user_id);
+    debtors.sort((a, b) => b.user_id - a.user_id);
+
     for (const creditor of creditors) {
         
         if (creditor.paid  > 0) { 
@@ -178,6 +227,179 @@ expenseRoutes.post('/:group_id', validateNewExpense, async (req, res) => {
 
     return res.status(201).json({ id: expense.id, group_id: group_id, total_spent, category, currency, participants });
   });
+
+expenseRoutes.put('/:group_id/:expense_id', validatePatchGroupExpenses, async (req, res) => {
+    const { group_id, expense_id } = req.params;
+    const { total_spent, category, currency, participants } = req.body;
+    
+    const validGroup = await Group.findOne({ where: { id: group_id } });
+    if (!validGroup) {
+        return res.status(400).json({ errors: [{ msg: 'El grupo no existe' }] });
+    }
+
+    const validExpense = await Expense.findOne({ where: { id: expense_id } });
+    if (!validExpense) {
+        return res.status(400).json({ errors: [{ msg: 'El gasto no existe' }] });
+    }
+
+    // Tenemos que chequear que el cambio que se hará dejará el grupo en un estado válido
+    let users_total_spent = 0;
+    let users_total_paid = 0;
+
+    for (const participant of participants) {
+        if (!participant.hasOwnProperty('user_id') || !participant.hasOwnProperty('spent') || !participant.hasOwnProperty('paid')) {
+            return res.status(400).json({ errors: [{ msg: 'Participante invalido: se requieren los campos user_id, spent o paid' }] });
+        }
+        const validParticipant = await GroupMember.findOne({ where: { user_id: participant['user_id'], group_id: group_id } });
+        if (!validParticipant) {
+            return res.status(400).json({ errors: [{ msg: 'Participante invalido: El usuario no pertenece al grupo' }] });
+        }
+        users_total_spent += participant.spent;
+        users_total_paid += participant.paid;
+    }
+
+    if (users_total_spent !== total_spent || users_total_paid !== total_spent) {
+        return res.status(400).json({ errors: [{ msg: 'El total gastado y el total pagado tienen que ser iguales a la suma de los gastos individuales' }] });
+    }
+
+    if (validGroup.budget > 0 && (validGroup.total_spent + total_spent - validExpense.total_spent > validGroup.budget)) {
+        return res.status(400).json({ errors: [{ msg: 'La modificación en el gasto hace que se exceda del presupuesto' }] });
+    }
+
+    const validCategory = Categories.includes(category);
+    if (!validCategory) {
+        return res.status(400).json({ errors: [{ msg: 'Categoria invalida' }] });
+    }
+
+    // Ahora tenemos que ver la manera en la que los viejos individual expenses afectaron a los diferentes usuarios y hacer la inversa
+    const old_individual_expenses = await IndividualExpense.findAll({ where: { expense_id: expense_id } });
+    var old_creditors = [];
+    var old_debtors = [];
+    
+    for (const old_individual_expense of old_individual_expenses) {
+        const user = {
+            user_id: old_individual_expense.user_id,
+            spent: old_individual_expense.total_spent,
+            paid: old_individual_expense.total_paid
+        }
+        if (user.spent > user.paid) {
+            old_debtors.push(user);
+        } else if (user.spent < user.paid) {
+            old_creditors.push(user);
+        }
+    }
+
+    old_creditors.sort((a, b) => b.user_id - a.user_id);
+    old_debtors.sort((a, b) => b.user_id - a.user_id);
+
+    for (const old_creditor of old_creditors) {
+        
+        if (old_creditor.paid  > 0) { 
+            for (const old_debtor of old_debtors) {
+                if (old_debtor.spent > 0){
+                    if (old_debtor.spent < old_creditor.paid) {                        
+                        old_creditor.paid = old_creditor.paid - old_debtor.spent;
+                        modifyDebt(group_id, old_creditor.user_id, old_debtor.user_id, old_debtor.spent);
+                        old_debtor.spent = 0;
+                    }                                         
+                    else if (old_debtor.spent > old_creditor.paid){
+                        old_debtor.spent = old_debtor.spent - old_creditor.paid;
+                        modifyDebt(group_id, old_creditor.user_id, old_debtor.user_id, old_creditor.paid);
+                        old_creditor.paid = 0;
+                    }                     
+                    else {
+                        modifyDebt(group_id, old_creditor.user_id, old_debtor.user_id, old_debtor.spent);
+                        old_debtor.spent = 0;
+                        old_creditor.paid = 0;
+                    }
+                }
+            }
+        }
+    }
+
+    // Ahora que ya revertimos los efectos de la deuda y sabemos que la nueva será válida, borramos los individual expenses viejos
+    for (const old_individual_expense of old_individual_expenses) {
+        await old_individual_expense.destroy();
+    }
+
+    // Actualizamos el gasto total
+    validExpense.total_spent = total_spent;
+
+    // Actualizamos la categoría
+    validExpense.category = category;
+
+    // Actualizamos la moneda
+    validExpense.currency = currency;
+
+    try {
+        await validExpense.save();
+    } catch (error) {
+        return res.status(500).json({ errors: [{ msg: 'Error al actualizar el gasto' }] });
+    }
+
+    // Como antes ya chequeamos que los valores del nuevo gasto son de usuarios y montos válidos, podemos crear los nuevos individual expenses
+    var new_creditors = [];
+    var new_debtors = [];
+
+    for (const participant of participants) {
+        if (participant.spent > participant.paid) {
+            let newParticipant = participant;
+            newParticipant.spent = newParticipant.spent - newParticipant.paid;
+            newParticipant.paid = 0;
+            new_debtors.push(newParticipant);
+        }
+        else if (participant.spent < participant.paid) {
+            let newParticipant = participant;
+            newParticipant.paid = newParticipant.paid - newParticipant.spent;
+            newParticipant.spent = 0;
+            new_creditors.push(newParticipant);
+        }
+    };
+
+    var new_individual_expenses = [];
+
+    for (const participant of participants) {
+        const individualExpense = await IndividualExpense.create({ expense_id: expense_id, user_id: participant['user_id'], group_id: group_id, total_spent: participant['spent'], total_paid: participant['paid'] });
+        if (!individualExpense) {
+            for (const createdIndividualExpense of new_individual_expenses) {
+                await createdIndividualExpense.destroy();
+            }
+            return res.status(500).json({ errors: [{ msg: 'Error al crear gasto individual' }] });
+        }
+        new_individual_expenses.push(individualExpense);
+    }
+
+    new_creditors.sort((a, b) => b.user_id - a.user_id);
+    new_debtors.sort((a, b) => b.user_id - a.user_id);
+
+    for (const new_creditor of new_creditors) {
+        
+        if (new_creditor.paid  > 0) { 
+            for (const new_debtor of new_debtors) {
+                if (new_debtor.spent > 0){
+                    if (new_debtor.spent < new_creditor.paid) {                        
+                        new_creditor.paid = new_creditor.paid - new_debtor.spent;
+                        modifyDebt(group_id, new_debtor.user_id, new_creditor.user_id, new_debtor.spent);
+                        new_debtor.spent = 0;
+                    }                                         
+                    else if (new_debtor.spent > new_creditor.paid){
+                        new_debtor.spent = new_debtor.spent - new_creditor.paid;
+                        modifyDebt(group_id, new_debtor.user_id, new_creditor.user_id, new_creditor.paid);
+                        new_creditor.paid = 0;
+                    }                     
+                    else {
+                        modifyDebt(group_id, new_debtor.user_id, new_creditor.user_id, new_debtor.spent);
+                        new_debtor.spent = 0;
+                        new_creditor.paid = 0;
+                    }
+                }
+            }
+        }
+    }
+
+    return res.status(201).json({ id: validExpense.id, group_id: group_id, total_spent, category, currency, participants });
+});
+
   
 
 expenseRoutes.get('/:group_id', validateGetGroupExpenses, async (req, res) => {

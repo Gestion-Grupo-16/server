@@ -64,3 +64,14 @@ Content-Type: application/json
     "email": "afabregas@fi.uba.ar",
     "username": "AlejoF"
 }
+
+###
+
+POST http://localhost:8721/users
+Content-Type: application/json
+
+{
+    "id": "7",
+    "email": "smoon@fi.uba.ar",
+    "username": "SolM"
+}
