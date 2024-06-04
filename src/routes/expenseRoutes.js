@@ -165,8 +165,8 @@ expenseRoutes.post('/:group_id', validateNewExpense, async (req, res) => {
             creditors.push(newParticipant);
         }
     };
-    console.log(debtors);
-    console.log(creditors);
+    // console.log(debtors);
+    // console.log(creditors);
 
     if (spent !== total_spent || paid !== total_spent) {
         return res.status(400).json({ errors: [{ msg: 'El total gastado y el total pagado tienen que ser iguales a la suma de los gastos individuales' }] });
@@ -404,7 +404,7 @@ expenseRoutes.put('/:group_id/:expense_id', validatePatchGroupExpenses, async (r
 
 expenseRoutes.get('/:group_id', validateGetGroupExpenses, async (req, res) => {
     const { group_id } = req.params
-    console.log(group_id)
+    // console.log(group_id)
 
     const validGroup = await Group.findOne({ where: { id: group_id } })
     if (!validGroup) {
@@ -456,7 +456,7 @@ expenseRoutes.get('/debts/:group_id/:user_id', validateGetGroupExpenses, async (
 
 expenseRoutes.get('/individual/:group_id', validateGetGroupExpenses, async (req, res) => {
     const { group_id } = req.params
-    console.log(group_id)
+    // console.log(group_id)
 
     const validGroup = await Group.findOne({ where: { id: group_id } })
     if (!validGroup) {
@@ -505,7 +505,7 @@ expenseRoutes.get('/balance/:group_id', async (req, res) => {
     for(const member of group_members){
         // console.log(member);    
         const user = member.user;
-        console.log("User:",user);
+        // console.log("User:",user);
         members[user.id] = {
             username: user.username,
             email: user.email,
@@ -584,25 +584,23 @@ expenseRoutes.get('/options/currencies', async (req, res) => {
     return res.status(200).json(Currencies);
 });
 
-
 expenseRoutes.get('/categories/:group_id/', async (req, res) => {
-    
+    console.log("entro");
     const { group_id } = req.params;
     let categories = req.query.categories;
 
+    console.log(categories);
     // Ensure categories is an array
     if (typeof categories === 'string') {
         categories = categories.split(',');
     }
-    
-    console.log(categories);
 
     let total_spent = 0;
     let arrayExpenses = [];
-    let arrayIndividualExpenses = [];
 
     try {
         for (const category of categories) {
+            // Assuming 'Categories' is a predefined array of valid categories
             if (!Categories.includes(category)) {
                 return res.status(400).json({ errors: [{ msg: 'Categoría inexistente' }] });
             }
@@ -628,22 +626,39 @@ expenseRoutes.get('/categories/:group_id/', async (req, res) => {
             return res.status(404).json({ errors: [{ msg: 'El grupo no tiene gastos individuales' }] });
         }
 
-        arrayIndividualExpenses = arrayExpenses.map(expense => expense.toJSON());
+        // Transforming the expenses into the desired format
+        let transformedExpenses = arrayExpenses.map(expense => {
+            return {
+                id: expense.id,
+                group_id: expense.group_id,
+                total_spent: expense.total_spent,
+                category: expense.category,
+                currency: expense.currency,
+                participants: []
+            };
+        });
+
+        // Adding individual expenses to the corresponding expense
         individualExpenses.forEach(indExpense => {
             const indExpenseJson = indExpense.toJSON();
             indExpenseJson.username = indExpenseJson.user.username;
             indExpenseJson.email = indExpenseJson.user.email;
             delete indExpenseJson.user;
-            arrayIndividualExpenses.push(indExpenseJson);
+
+            const expense = transformedExpenses.find(exp => exp.id === indExpenseJson.expense_id);
+            if (expense) {
+                expense.participants.push(indExpenseJson);
+            }
         });
+
+        return res.status(200).json(transformedExpenses);
 
     } catch (error) {
         console.error(error);
         return res.status(500).json({ errors: [{ msg: 'Error al buscar gastos por categorías' }] });
     }
-
-    return res.status(200).json({ total_spent, arrayIndividualExpenses });
 });
+
 
 
 // expenseRoutes.get('/categories/:group_id/', async (req, res) => {

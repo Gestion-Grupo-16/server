@@ -102,7 +102,7 @@ groupRoutes.post('/',validateCreateGroup , async (req, res) => {
     const description = req.body.description || `Group ${name}`;
 
     const budget = req.body.budget;
-    console.log("budget", budget);
+    // console.log("budget", budget);
 
     const user = await User.findOne({ where: { id: user_id } });
     if (!user) {
@@ -237,7 +237,7 @@ groupRoutes.patch('/:group_id/:user_id/budget', validatePatchAdminGroup, async (
 
 
 groupRoutes.delete('/members/:group_id/:user_id', validatePatchAdminGroup, async (req, res) =>{
-    console.log("DELETE res.body", req.body)
+    // console.log("DELETE res.body", req.body)
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() })
@@ -295,9 +295,9 @@ groupRoutes.delete('/:group_id/:user_id', validateGroupMemberOperation, async (r
 
 // groupRoutes.patch('/groups/:group_id', validatePatchGroupName, validatePatchGroupDescription ,async (req, res) => {
 groupRoutes.patch('/:group_id', validatePatchGroup,async (req, res) => {
-    console.log("PATCH res.body", req.body)
-    console.log("PATCH res.params", req.params)
-    console.log("PATCH res.body", req.query)
+    // console.log("PATCH res.body", req.body)
+    // console.log("PATCH res.params", req.params)
+    // console.log("PATCH res.body", req.query)
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
@@ -336,9 +336,9 @@ groupRoutes.patch('/:group_id', validatePatchGroup,async (req, res) => {
 
 // Change the admin of the group
 groupRoutes.patch('/admins/:group_id/:user_id', validatePatchAdminGroup,async (req, res) => {
-    console.log("PATCH res.body", req.body)
-    console.log("PATCH res.params", req.params)
-    console.log("PATCH res.body", req.query)
+    // console.log("PATCH res.body", req.body)
+    // console.log("PATCH res.params", req.params)
+    // console.log("PATCH res.body", req.query)
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });

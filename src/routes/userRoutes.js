@@ -87,7 +87,7 @@ userRoutes.post('/',validateCreateUser , async (req,res) => {
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-    console.log("the body is ", req.body);
+    // console.log("the body is ", req.body);
     const { id, email, username } = req.body;
 
     const mp_alias = req.body.mp_alias || undefined;
@@ -181,7 +181,7 @@ userRoutes.patch('/mp_alias', validatePatchMPUser, async (req, res) => {
 });
 
 userRoutes.get('/:user_id',validateGetUser, async (req, res) => {
-  console.log("GET /users/:user_id");
+  // console.log("GET /users/:user_id");
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
@@ -200,7 +200,7 @@ userRoutes.get('/:user_id',validateGetUser, async (req, res) => {
 
 
 userRoutes.get('/identification/:user_identification', validateGetIdentification, async (req, res) => {
-  console.log("GET /users/identification/:user_identification");
+  // console.log("GET /users/identification/:user_identification");
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
