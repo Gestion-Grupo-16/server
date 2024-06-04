@@ -74,3 +74,53 @@ Content-Type: application/json
         }
     ]
 }
+
+
+POST http://localhost:8721/expenses/1
+Content-Type: application/json
+
+{
+    "total_spent": 1000,
+    "category": "Comida",
+    "currency": "ARS",
+    "participants": [
+        {
+            "user_id": "1",
+            "spent": 300,
+            "paid": 800
+        },
+        {
+            "user_id": "2",
+            "spent": 300,
+            "paid": 100
+        },
+        {
+            "user_id": "3",
+            "spent": 400,
+            "paid": 100
+        }
+    ]
+}
+
+###
+
+POST http://localhost:8721/expenses/1
+Content-Type: application/json
+
+{
+    "total_spent": 1000,
+    "category": "Transporte",
+    "currency": "ARS",
+    "participants": [
+        {
+            "user_id": "2",
+            "spent": 500,
+            "paid": 0
+        },
+        {
+            "user_id": "3",
+            "spent": 500,
+            "paid": 1000
+        }
+    ]
+}

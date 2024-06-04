@@ -26,6 +26,7 @@ https://server-y9uq.onrender.com
   - Params: user_id
 
 - **GET** /identification/:user_identification
+
   - Obtiene la información de usuarios que contienen userIndentification como username o emai.
   - Params: user_identification
 
@@ -143,6 +144,12 @@ https://server-y9uq.onrender.com
 
   - Obtiene las debts de un usuario en un grupo con el resto de los miembros
   - Params: group_id, user_id
+
+- **GET** GET /categories/1?categories=Cat1&categories=Cat2
+
+  - Devuelve los gastos individuales para las categorias pedidas
+  - Params: group_id
+  - Query: categories
 
 ### Debts (/debts)
 

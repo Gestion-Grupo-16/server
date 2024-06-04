@@ -1,0 +1,2 @@
+###
+GET http://localhost:8721/expenses/categories/1?categories=Comida&categories=Transporte

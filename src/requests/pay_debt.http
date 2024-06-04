@@ -1,0 +1,10 @@
+### expenses/debts/:group_id/:creditor_id
+PATCH http://localhost:8721/expenses/debts/1/1
+Content-Type: application/json
+
+{
+    "debtor_id": "3"
+}
+
+###
+GET http://localhost:8721/expenses/history/1

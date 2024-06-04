@@ -4,13 +4,17 @@ import { Group } from "./Group.js";
 import { Expense } from "./Expense.js";
 import { IndividualExpense } from "./IndividualExpense.js";
 import { Debts } from "./Debts.js";
+import { Payment } from "./Payments.js";
 
 
 User.hasMany(GroupMember, { foreignKey: 'user_id' });
 User.hasMany(Group, {foreignKey:'admin_id'});
-User.hasMany(IndividualExpense, { foreignKey: 'user_id' });
+User.hasMany(IndividualExpense, {as:'user',  foreignKey: 'user_id' });
 User.hasMany(Debts, { foreignKey: 'debtor_id' });
 User.hasMany(Debts, { foreignKey: 'creditor_id' });
+
+Payment.belongsTo(User, { as: 'debtor', foreignKey: 'debtor_id' });
+Payment.belongsTo(User, { as: 'creditor', foreignKey: 'creditor_id' });
 
 Group.hasMany(GroupMember, { foreignKey: 'group_id' });
 Group.hasMany(Expense, { foreignKey: 'group_id' });

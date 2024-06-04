@@ -9,6 +9,7 @@ import "./models/Expense.js";
 import "./models/IndividualExpense.js";
 import "./models/Debts.js";
 import "./models/associations.js";
+import "./models/Payments.js";
 
 import userRoutes from "./routes/userRoutes.js";
 import groupRoutes from "./routes/groupRoutes.js";

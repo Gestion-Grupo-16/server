@@ -7,9 +7,9 @@ import { modifyDebt } from "../routes/debtsRoutes.js";
 import { Expense,Categories,Currencies } from "../models/Expense.js";
 import {IndividualExpense} from "../models/IndividualExpense.js";
 import { Debts } from "../models/Debts.js";
+import { Payment } from "../models/Payments.js";
 
 import { Op } from "sequelize";
-
 const expenseRoutes = express.Router();
 
 const validateNewExpense = [
@@ -556,9 +556,16 @@ expenseRoutes.patch('/debts/:group_id/:creditor_id', validatePayDebts, async (re
     if (updatedDebt.amount_owed === 0 || updatedDebt.amount_owed < 0) {
         return res.status(400).send({ error: "No hay deuda que pagar" });
     }
-
+    
+    const payment = await Payment.create({ group_id, creditor_id, debtor_id, amount: updatedDebt.amount_owed });
+    
     updatedDebt.amount_owed = 0;
-
+    
+    if(!payment){
+        return res.status(500).send({ error: "Error registrando el pago" });
+    }
+    await payment.save();
+    
     try {
         await updatedDebt.save();
         return res.status(200).send({ message: "Deuda pagada exitosamente" });
@@ -576,9 +583,19 @@ expenseRoutes.get('/options/categories', async (req, res) => {
 expenseRoutes.get('/options/currencies', async (req, res) => {
     return res.status(200).json(Currencies);
 });
-expenseRoutes.put('/:group_id/categories', async (req, res) => {
-    const { categories } = req.body;
+
+
+expenseRoutes.get('/categories/:group_id/', async (req, res) => {
+    
     const { group_id } = req.params;
+    let categories = req.query.categories;
+
+    // Ensure categories is an array
+    if (typeof categories === 'string') {
+        categories = categories.split(',');
+    }
+    
+    console.log(categories);
 
     let total_spent = 0;
     let arrayExpenses = [];
@@ -591,23 +608,34 @@ expenseRoutes.put('/:group_id/categories', async (req, res) => {
             }
 
             const validExpenses = await Expense.findAll({ where: { category: category, group_id: group_id } });
-            for (const valExpenses of validExpenses) {
-                total_spent += valExpenses.total_spent;
-                arrayExpenses = arrayExpenses.concat(valExpenses);
+            for (const valExpense of validExpenses) {
+                total_spent += valExpense.total_spent;
+                arrayExpenses.push(valExpense);
             }
         }
 
-        for (const expense of arrayExpenses) {
-            const individualExpenses = await IndividualExpense.findAll({ where: { expense_id: expense.id } });
-            if (!individualExpenses) {
-                return res.status(400).json({ errors: [{ msg: 'El grupo no tiene gastos individuales' }] });
-            }
-            arrayIndividualExpenses = arrayIndividualExpenses.concat(expense);
-            for (const indExpense of individualExpenses) {
-                arrayIndividualExpenses = arrayIndividualExpenses.concat(indExpense);
-            }
-            
+        if (arrayExpenses.length === 0) {
+            return res.status(404).json({ errors: [{ msg: 'No expenses found for the given categories and group' }] });
         }
+
+        const expenseIds = arrayExpenses.map(expense => expense.id);
+        const individualExpenses = await IndividualExpense.findAll({
+            where: { expense_id: { [Op.in]: expenseIds } },
+            include: [{ model: User, as: 'user', attributes: ['username', 'email'] }]
+        });
+
+        if (individualExpenses.length === 0) {
+            return res.status(404).json({ errors: [{ msg: 'El grupo no tiene gastos individuales' }] });
+        }
+
+        arrayIndividualExpenses = arrayExpenses.map(expense => expense.toJSON());
+        individualExpenses.forEach(indExpense => {
+            const indExpenseJson = indExpense.toJSON();
+            indExpenseJson.username = indExpenseJson.user.username;
+            indExpenseJson.email = indExpenseJson.user.email;
+            delete indExpenseJson.user;
+            arrayIndividualExpenses.push(indExpenseJson);
+        });
 
     } catch (error) {
         console.error(error);
@@ -617,6 +645,113 @@ expenseRoutes.put('/:group_id/categories', async (req, res) => {
     return res.status(200).json({ total_spent, arrayIndividualExpenses });
 });
 
+
+// expenseRoutes.get('/categories/:group_id/', async (req, res) => {
+    
+//     const { group_id } = req.params;
+//     let categories = req.query.categories;
+//     console.log(categories);
+    
+    
+
+//     let total_spent = 0;
+//     let arrayExpenses = [];
+//     let arrayIndividualExpenses = [];
+    
+
+//     try {
+//         for (const category of categories) {
+//             if (!Categories.includes(category)) {
+//                 return res.status(400).json({ errors: [{ msg: 'Categoría inexistente' }] });
+//             }
+
+//             const validExpenses = await Expense.findAll({ where: { category: category, group_id: group_id } });
+//             for (const valExpenses of validExpenses) {
+//                 total_spent += valExpenses.total_spent;
+//                 arrayExpenses = arrayExpenses.concat(valExpenses);
+//             }
+//         }
+
+//         for (const expense of arrayExpenses) {
+//             const individualExpenses = await IndividualExpense.findAll({ where: { expense_id: expense.id } });
+//             if (!individualExpenses) {
+//                 return res.status(400).json({ errors: [{ msg: 'El grupo no tiene gastos individuales' }] });
+//             }
+//             arrayIndividualExpenses = arrayIndividualExpenses.concat(expense);
+//             for (const indExpense of individualExpenses) {
+//                 arrayIndividualExpenses = arrayIndividualExpenses.concat(indExpense);
+//             }
+            
+//         }
+
+//     } catch (error) {
+//         console.error(error);
+//         return res.status(500).json({ errors: [{ msg: 'Error al buscar gastos por categorías' }] });
+//     }
+
+//     return res.status(200).json({ total_spent, arrayIndividualExpenses });
+// });
+
+
+expenseRoutes.get("/history/:group_id", async (req, res) => {
+
+    const { group_id } = req.params;
+    
+    const group = await Group.findOne({ where: { id: group_id } });
+
+    if (!group) {
+        return res.status(400).json({ errors: [{ msg: 'El grupo no existe' }] });
+    }
+
+    const payments = await Payment.findAll({
+        attributes: ['debtor_id', 'creditor_id', 'amount', "creation_date"],
+        include: [
+            {
+                model: User,
+                as: 'debtor',
+                attributes: ['email', 'username']
+            },
+            {
+                model: User,
+                as: 'creditor',
+                attributes: ['email', 'username']
+            }
+        ],
+        raw: true
+    });
+    
+    if (!payments) {
+        return res.status(400).json({ errors: [{ msg: 'El grupo no tiene pagos' }] });
+    }
+
+    const formattedPayments = payments.map(payment => ({
+        debtor: {
+            id: payment.debtor_id,
+            email: payment['debtor.email'],
+            username: payment['debtor.username']
+        },
+        creditor: {
+            id: payment.creditor_id,
+            email: payment['creditor.email'],
+            username: payment['creditor.username']
+        },
+        amount: payment.amount,
+        date: payment.creation_date
+    }));
+    
+    
+    let total = 0;
+
+    for (const payment of payments) {
+        total += payment.amount;
+    }
+     
+    return res.status(200).json({
+        total_spent: total,
+        payments: formattedPayments
+    });
+
+});
 
 
 
