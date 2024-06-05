@@ -287,8 +287,12 @@ expenseRoutes.put('/:group_id/:expense_id', validatePatchGroupExpenses, async (r
             paid: old_individual_expense.total_paid
         }
         if (user.spent > user.paid) {
+            user.spent = user.spent - user.paid;
+            user.paid = 0;
             old_debtors.push(user);
         } else if (user.spent < user.paid) {
+            user.paid = user.paid - user.spent;
+            user.spent = 0;
             old_creditors.push(user);
         }
     }
@@ -347,13 +351,13 @@ expenseRoutes.put('/:group_id/:expense_id', validatePatchGroupExpenses, async (r
 
     for (const participant of participants) {
         if (participant.spent > participant.paid) {
-            let newParticipant = participant;
+            let newParticipant = {...participant};
             newParticipant.spent = newParticipant.spent - newParticipant.paid;
             newParticipant.paid = 0;
             new_debtors.push(newParticipant);
         }
         else if (participant.spent < participant.paid) {
-            let newParticipant = participant;
+            let newParticipant = {...participant};
             newParticipant.paid = newParticipant.paid - newParticipant.spent;
             newParticipant.spent = 0;
             new_creditors.push(newParticipant);
