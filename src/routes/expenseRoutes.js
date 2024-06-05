@@ -149,24 +149,7 @@ expenseRoutes.post('/:group_id', validateNewExpense, async (req, res) => {
     for (const participant of participants) {
         spent += participant.spent;
         paid += participant.paid;
-
-        if (participant.spent > participant.paid) {
-            
-            let newParticipant = participant;
-            newParticipant.spent = newParticipant.spent - newParticipant.paid;
-            newParticipant.paid = 0;
-            debtors.push(newParticipant);
-        }
-        else if (participant.spent < participant.paid) {
-
-            let newParticipant = participant;
-            newParticipant.paid = newParticipant.paid - newParticipant.spent;
-            newParticipant.spent = 0;
-            creditors.push(newParticipant);
-        }
-    };
-    // console.log(debtors);
-    // console.log(creditors);
+    }
 
     if (spent !== total_spent || paid !== total_spent) {
         return res.status(400).json({ errors: [{ msg: 'El total gastado y el total pagado tienen que ser iguales a la suma de los gastos individuales' }] });
@@ -192,9 +175,30 @@ expenseRoutes.post('/:group_id', validateNewExpense, async (req, res) => {
             await expense.destroy();
             return res.status(400).json({ errors: [{ msg: 'Participante invalido: El usuario no pertenece al grupo' }] });
         }
-        const individualExpense = await IndividualExpense.create({ expense_id: expense.id, user_id: participant['user_id'], group_id: group_id, total_spent: participant['spent'], total_paid: participant['paid'] });
+        console.log("participant",participant);
+        const individualExpense = await IndividualExpense.create({ expense_id: expense.id, user_id: participant['user_id'], group_id: group_id, total_spent: participant.spent, total_paid: participant.paid });
         individualExpenses.push(individualExpense);
     }
+    for (const participant of participants) {
+        spent += participant.spent;
+        paid += participant.paid;
+        console.log("participant paid ",participant.paid);
+
+        if (participant.spent > participant.paid) {
+            
+            let newParticipant = participant;
+            newParticipant.spent = newParticipant.spent - newParticipant.paid;
+            newParticipant.paid = 0;
+            debtors.push(newParticipant);
+        }
+        else if (participant.spent < participant.paid) {
+
+            let newParticipant = participant;
+            newParticipant.paid = newParticipant.paid - newParticipant.spent;
+            newParticipant.spent = 0;
+            creditors.push(newParticipant);
+        }
+    };
     // Modificar la deuda entre los dos usuarios pertenecientes a la individual expense
 
     creditors.sort((a, b) => b.user_id - a.user_id);
@@ -595,7 +599,7 @@ expenseRoutes.get('/categories/:group_id/', async (req, res) => {
         categories = categories.split(',');
     }
 
-    let total_spent = 0;
+    
     let arrayExpenses = [];
 
     try {
@@ -604,11 +608,14 @@ expenseRoutes.get('/categories/:group_id/', async (req, res) => {
             if (!Categories.includes(category)) {
                 return res.status(400).json({ errors: [{ msg: 'Categoría inexistente' }] });
             }
-
+            
             const validExpenses = await Expense.findAll({ where: { category: category, group_id: group_id } });
+            let total_spent = 0;
             for (const valExpense of validExpenses) {
+                
                 total_spent += valExpense.total_spent;
                 arrayExpenses.push(valExpense);
+                console.log("validExpenses",validExpenses);
             }
         }
 
@@ -623,10 +630,9 @@ expenseRoutes.get('/categories/:group_id/', async (req, res) => {
         });
 
         if (individualExpenses.length === 0) {
-            return res.status(404).json({ errors: [{ msg: 'El grupo no tiene gastos individuales' }] });
+            return res.status(400).json({ errors: [{ msg: 'El grupo no tiene gastos individuales' }] });
         }
 
-        // Transforming the expenses into the desired format
         let transformedExpenses = arrayExpenses.map(expense => {
             return {
                 id: expense.id,
@@ -638,7 +644,6 @@ expenseRoutes.get('/categories/:group_id/', async (req, res) => {
             };
         });
 
-        // Adding individual expenses to the corresponding expense
         individualExpenses.forEach(indExpense => {
             const indExpenseJson = indExpense.toJSON();
             indExpenseJson.username = indExpenseJson.user.username;
@@ -661,57 +666,10 @@ expenseRoutes.get('/categories/:group_id/', async (req, res) => {
 
 
 
-// expenseRoutes.get('/categories/:group_id/', async (req, res) => {
-    
-//     const { group_id } = req.params;
-//     let categories = req.query.categories;
-//     console.log(categories);
-    
-    
-
-//     let total_spent = 0;
-//     let arrayExpenses = [];
-//     let arrayIndividualExpenses = [];
-    
-
-//     try {
-//         for (const category of categories) {
-//             if (!Categories.includes(category)) {
-//                 return res.status(400).json({ errors: [{ msg: 'Categoría inexistente' }] });
-//             }
-
-//             const validExpenses = await Expense.findAll({ where: { category: category, group_id: group_id } });
-//             for (const valExpenses of validExpenses) {
-//                 total_spent += valExpenses.total_spent;
-//                 arrayExpenses = arrayExpenses.concat(valExpenses);
-//             }
-//         }
-
-//         for (const expense of arrayExpenses) {
-//             const individualExpenses = await IndividualExpense.findAll({ where: { expense_id: expense.id } });
-//             if (!individualExpenses) {
-//                 return res.status(400).json({ errors: [{ msg: 'El grupo no tiene gastos individuales' }] });
-//             }
-//             arrayIndividualExpenses = arrayIndividualExpenses.concat(expense);
-//             for (const indExpense of individualExpenses) {
-//                 arrayIndividualExpenses = arrayIndividualExpenses.concat(indExpense);
-//             }
-            
-//         }
-
-//     } catch (error) {
-//         console.error(error);
-//         return res.status(500).json({ errors: [{ msg: 'Error al buscar gastos por categorías' }] });
-//     }
-
-//     return res.status(200).json({ total_spent, arrayIndividualExpenses });
-// });
-
-
 expenseRoutes.get("/history/:group_id", async (req, res) => {
 
     const { group_id } = req.params;
-    
+    console.log("group_id",group_id)
     const group = await Group.findOne({ where: { id: group_id } });
 
     if (!group) {
