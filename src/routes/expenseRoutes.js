@@ -677,7 +677,8 @@ expenseRoutes.get("/history/:group_id", async (req, res) => {
     }
 
     const payments = await Payment.findAll({
-        attributes: ['debtor_id', 'creditor_id', 'amount', "creation_date"],
+        attributes: ['group_id','debtor_id', 'creditor_id', 'amount', "creation_date"],
+        where: { group_id: group_id },
         include: [
             {
                 model: User,
@@ -692,8 +693,7 @@ expenseRoutes.get("/history/:group_id", async (req, res) => {
         ],
         raw: true
     });
-    
-    if (!payments) {
+    if (!payments || payments.length == 0) {
         return res.status(400).json({ errors: [{ msg: 'El grupo no tiene pagos' }] });
     }
 
