@@ -8,7 +8,7 @@ import { Expense,Categories,Currencies } from "../models/Expense.js";
 import {IndividualExpense} from "../models/IndividualExpense.js";
 import { Debts } from "../models/Debts.js";
 import { Payment } from "../models/Payments.js";
-
+import { sendNotifiaction } from "../notifications/notifications.js";
 import { Op } from "sequelize";
 const expenseRoutes = express.Router();
 
@@ -137,7 +137,11 @@ expenseRoutes.post('/:group_id', validateNewExpense, async (req, res) => {
         cumulative_total_spent += valExpenses.total_spent;
     }
 
-    if (validGroup.budget > 0 && (cumulative_total_spent + total_spent) > validGroup.budget){
+    if ((cumulative_total_spent + total_spent) > validGroup.budget * 0.9 && validGroup.budget > 0){
+        sendNotifiaction(group_id, `El grupo ha gastado más del 90% de su presupuesto.\n     - Presupuesto actual: ${validGroup.budget}\n     - Gasto actual: ${cumulative_total_spent + total_spent}`);
+    }
+
+    if (validGroup.budget > 0 && (cumulative_total_spent + total_spent) > validGroup.budget){                
         return res.status(403).send({ error: "Error: el nuevo gasto excede el presupuesto" });
     }
     
@@ -175,14 +179,14 @@ expenseRoutes.post('/:group_id', validateNewExpense, async (req, res) => {
             await expense.destroy();
             return res.status(400).json({ errors: [{ msg: 'Participante invalido: El usuario no pertenece al grupo' }] });
         }
-        console.log("participant",participant);
+        // console.log("participant",participant);
         const individualExpense = await IndividualExpense.create({ expense_id: expense.id, user_id: participant['user_id'], group_id: group_id, total_spent: participant.spent, total_paid: participant.paid });
         individualExpenses.push(individualExpense);
     }
     for (const participant of participants) {
         spent += participant.spent;
         paid += participant.paid;
-        console.log("participant paid ",participant.paid);
+        // console.log("participant paid ",participant.paid);
 
         if (participant.spent > participant.paid) {
             
@@ -228,6 +232,9 @@ expenseRoutes.post('/:group_id', validateNewExpense, async (req, res) => {
             }
         }
     } 
+    const nombreGasto = "Cafe con medialunas";
+    sendNotifiaction(group_id, `Se ha añadido un nuevo gasto \n - ${nombreGasto} \n - Total gastado: ${total_spent} \n - Categoria: ${category} \n - Moneda: ${currency}`);
+
 
     return res.status(201).json({ id: expense.id, group_id: group_id, total_spent, category, currency, participants });
   });
@@ -404,6 +411,8 @@ expenseRoutes.put('/:group_id/:expense_id', validatePatchGroupExpenses, async (r
             }
         }
     }
+    const nombreGasto = "Cafe con medialunas";
+    sendNotifiaction(group_id, `Se modificó el gasto ${nombreGasto}`);
 
     return res.status(201).json({ id: validExpense.id, group_id: group_id, total_spent, category, currency, participants });
 });
@@ -567,6 +576,7 @@ expenseRoutes.patch('/debts/:group_id/:creditor_id', validatePayDebts, async (re
     
     const payment = await Payment.create({ group_id, creditor_id, debtor_id, amount: updatedDebt.amount_owed });
     
+    const oldOwed = updatedDebt.amount_owed;
     updatedDebt.amount_owed = 0;
     
     if(!payment){
@@ -575,6 +585,9 @@ expenseRoutes.patch('/debts/:group_id/:creditor_id', validatePayDebts, async (re
     await payment.save();
     
     try {
+        const debtor_name = await User.findOne({ where: { id: debtor_id } });
+        const creditor_name = await User.findOne({ where: { id: creditor_id } });
+        sendNotifiaction(group_id, `Se ha realizado un pago de deuda \n - Deudor: ${debtor_name.username} \n - Acreedor: ${creditor_name.username} \n - Monto: ${oldOwed}`);        
         await updatedDebt.save();
         return res.status(200).send({ message: "Deuda pagada exitosamente" });
     }
