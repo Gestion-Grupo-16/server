@@ -29,6 +29,10 @@ export const Expense = sequelize.define(
       primaryKey: true,
       autoIncrement: true,
     },
+    description : {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
     group_id : {
       type: DataTypes.INTEGER,
       foreignKey: true,

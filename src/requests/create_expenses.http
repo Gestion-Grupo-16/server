@@ -2,6 +2,7 @@ POST http://localhost:8721/expenses/1
 Content-Type: application/json
 
 {
+    "description": "Pollo al spiedo",
     "total_spent": 1000,
     "category": "Comida",
     "currency": "ARS",
@@ -30,6 +31,7 @@ POST http://localhost:8721/expenses/1
 Content-Type: application/json
 
 {
+    "description": "Arroz primavera",
     "total_spent": 500,
     "category": "Comida",
     "currency": "ARS",
@@ -53,6 +55,7 @@ POST http://localhost:8721/expenses/2
 Content-Type: application/json
 
 {
+    "description": "Pizza",
     "total_spent": 1500,
     "category": "Comida",
     "currency": "ARS",
@@ -80,6 +83,7 @@ POST http://localhost:8721/expenses/1
 Content-Type: application/json
 
 {
+    "description": "Sushi",
     "total_spent": 1000,
     "category": "Comida",
     "currency": "ARS",
@@ -108,6 +112,7 @@ POST http://localhost:8721/expenses/1
 Content-Type: application/json
 
 {
+    "description": "Uber",
     "total_spent": 1000,
     "category": "Transporte",
     "currency": "ARS",

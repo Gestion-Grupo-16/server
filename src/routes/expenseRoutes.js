@@ -20,6 +20,13 @@ const validateNewExpense = [
         .isInt()
         .withMessage('Group id must be an integer')
         .bail(),
+    body('description')
+        .notEmpty()
+        .withMessage('Expsnse description is required')
+        .bail()
+        .isString()
+        .withMessage('Group id must be an integer')
+        .bail(),
     body('total_spent')
         .notEmpty()
         .withMessage('Total spent is required')
@@ -85,6 +92,13 @@ const validatePatchGroupExpenses = [
         .isInt()
         .withMessage('Group id must be an integer')
         .bail(),
+    param('description')
+        .notEmpty()
+        .withMessage('Expsnse description is required')
+        .bail()
+        .isString()
+        .withMessage('Group id must be an integer')
+        .bail(),
     param('expense_id')
         .notEmpty()
         .withMessage('Expense id is required')
@@ -124,7 +138,7 @@ const validatePatchGroupExpenses = [
 
 expenseRoutes.post('/:group_id', validateNewExpense, async (req, res) => {
     const { group_id } = req.params;
-    const { total_spent, category, currency, participants  } = req.body;
+    const {description, total_spent, category, currency, participants  } = req.body;
     
     const validGroup = await Group.findOne({ where: { id: group_id } });
     if (!validGroup) {
@@ -163,7 +177,7 @@ expenseRoutes.post('/:group_id', validateNewExpense, async (req, res) => {
     if (!validCategory) {
         return res.status(400).json({ errors: [{ msg: 'Categoria invalida' }] });
     }
-    const expense = await Expense.create({ group_id, total_spent, category, currency });
+    const expense = await Expense.create({ group_id,description, total_spent, category, currency });
 
     var individualExpenses = [];
 
@@ -231,17 +245,16 @@ expenseRoutes.post('/:group_id', validateNewExpense, async (req, res) => {
                 }
             }
         }
-    } 
-    const nombreGasto = "Cafe con medialunas";
-    sendNotifiaction(group_id, `Se ha añadido un nuevo gasto \n - ${nombreGasto} \n - Total gastado: ${total_spent} \n - Categoria: ${category} \n - Moneda: ${currency}`);
+    }     
+    sendNotifiaction(group_id, `Se ha añadido un nuevo gasto \n - ${description} \n - Total gastado: ${total_spent} \n - Categoria: ${category} \n - Moneda: ${currency}`);
 
 
-    return res.status(201).json({ id: expense.id, group_id: group_id, total_spent, category, currency, participants });
+    return res.status(201).json({ id: expense.id, group_id: group_id, total_spent, category, currency, description, participants });
   });
 
 expenseRoutes.put('/:group_id/:expense_id', validatePatchGroupExpenses, async (req, res) => {
     const { group_id, expense_id } = req.params;
-    const { total_spent, category, currency, participants } = req.body;
+    const { description,total_spent, category, currency, participants } = req.body;
     
     const validGroup = await Group.findOne({ where: { id: group_id } });
     if (!validGroup) {
@@ -346,6 +359,10 @@ expenseRoutes.put('/:group_id/:expense_id', validatePatchGroupExpenses, async (r
     // Actualizamos la moneda
     validExpense.currency = currency;
 
+
+    // Actualizamos la descripcion
+    validExpense.description = description;
+
     try {
         await validExpense.save();
     } catch (error) {
@@ -411,10 +428,10 @@ expenseRoutes.put('/:group_id/:expense_id', validatePatchGroupExpenses, async (r
             }
         }
     }
-    const nombreGasto = "Cafe con medialunas";
-    sendNotifiaction(group_id, `Se modificó el gasto ${nombreGasto}`);
+    
+    sendNotifiaction(group_id, `Se modificó el gasto ${description}`);
 
-    return res.status(201).json({ id: validExpense.id, group_id: group_id, total_spent, category, currency, participants });
+    return res.status(201).json({ id: validExpense.id, group_id: group_id, total_spent, category, currency, participants, description });
 });
 
   
@@ -657,6 +674,7 @@ expenseRoutes.get('/categories/:group_id/', async (req, res) => {
                 total_spent: expense.total_spent,
                 category: expense.category,
                 currency: expense.currency,
+                description: expense.description,
                 participants: []
             };
         });
