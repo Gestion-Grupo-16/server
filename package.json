@@ -15,6 +15,7 @@
     "express": "^4.19.2",
     "express-validator": "^7.0.1",
     "nodemon": "^3.1.0",
+    "notificationapi-node-server-sdk": "^2.1.0",
     "pg": "^8.11.5",
     "sequelize": "^6.37.3"
   }
