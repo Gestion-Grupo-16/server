@@ -261,4 +261,23 @@ userRoutes.get('/firebase_token/:user_id', async (req, res) => {
   
 });
 
+userRoutes.patch('/firebase_token/:user_id', async (req, res) => {
+  const { user_id } = req.params;
+  const { firebase_token } = req.body;
+  console.log("user_id", user_id);  
+  try {
+    const user = await User.findOne({ where: { id: user_id } });
+    if (!user) {
+      console.error("Usuario no encontrado");
+      return res.status(404).send({ error: "Usuario no encontrado" });
+    }
+    user.firebase_token = firebase_token;
+    await user.save();
+    return res.status(200).send({ message: 'Token actualizado correctamente'});
+  } catch (err) {
+    console.error("Error en la operación", err);
+    return res.status(500).send({ error: "Error interno del servidor" });
+  }
+});
+
 export  default userRoutes;
