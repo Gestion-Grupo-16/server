@@ -5,7 +5,8 @@ Content-Type: application/json
     "id": "1",
     "email": "rberenguel@fi.uba.ar",
     "username": "RafaB",
-    "mp_alias": "RafaB"
+    "mp_alias": "RafaB",
+    "firebase_token": "tokenn"
 }
 
 ###
@@ -17,7 +18,8 @@ Content-Type: application/json
     "id": "2",
     "email": "temanuel@fi.uba.ar",
     "username": "TomasE",
-    "mp_alias": "TomasE"
+    "mp_alias": "TomasE",
+    "firebase_token": "tokenn"
 }
 
 ###
@@ -29,7 +31,7 @@ Content-Type: application/json
     "id": "3",
     "email": "sjaves@fi.uba.ar",
     "username": "SofiaJ",
-    "mp_alias": "SofiaJ"
+    "mp_alias": "SofiaJ"  
 }
 
 ###

@@ -1,0 +1,4 @@
+###
+GET http://localhost:8721/groups/1/firebase_token/
+
+

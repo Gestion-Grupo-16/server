@@ -24,6 +24,10 @@ export const User = sequelize.define(
       unique: true,
       allowNull: true,
     },
+    firebase_token: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
   },
   { timestamps: false },
 );

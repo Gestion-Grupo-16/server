@@ -88,13 +88,13 @@ userRoutes.post('/',validateCreateUser , async (req,res) => {
       return res.status(400).json({ errors: errors.array() });
     }
     // console.log("the body is ", req.body);
-    const { id, email, username } = req.body;
+    const { id, email, username, firebase_token } = req.body;
 
     const mp_alias = req.body.mp_alias || undefined;
     
     if (mp_alias !== undefined && typeof mp_alias !== 'string') {
       return res.status(400).send({ error: "El Alias de MP debe ser un string" });
-  }
+    }
 
     //si existe hay que chequear que sea unico en la bd
     if (mp_alias) {
@@ -122,13 +122,14 @@ userRoutes.post('/',validateCreateUser , async (req,res) => {
       username,
       email,
       mp_alias,
+      firebase_token,
     });
     
     if (!newUser) {
       return res.status(500).send({ error: "Error creando al usuario" });
     }
 
-    res.status(201).send({id ,username, email, mp_alias});
+    res.status(201).send({id ,username, email, mp_alias, firebase_token});
 
 } );
 
@@ -243,6 +244,5 @@ userRoutes.delete('/:users/:user_id', async (req, res) => {
 
   //return res.status(200).send({ message: 'User deleted'})
 })
-
 
 export  default userRoutes;

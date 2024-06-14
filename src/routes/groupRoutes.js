@@ -480,4 +480,27 @@ groupRoutes.get('/:group_id/budget', validateGetGroupMembers, async (req, res) =
     return res.status(200).json({group_budget : group_budget, total_spent : total_spent, dif_budget : dif_budget});
 });
 
+groupRoutes.get('/:group_id/firebase_token', validateGetGroupMembers, async (req, res) => {
+    const { group_id } = req.params
+
+    const group = await Group.findOne({ where: { id: group_id } });
+    if (!group) {
+        return res.status(404).send({ error: "Grupo no encontrado" });
+    }
+
+    const group_members = await GroupMember.findAll({
+        where: { group_id },
+        attributes: [], // Only select the 'pending' field from GroupMember
+        include: [{
+            model: User,
+            as: 'user',
+            attributes: ['username', 'email', 'firebase_token'] // Only select 'id', 'username', 'email' from User
+        }]
+    });
+    
+    return res.status(200).json(group_members);
+
+});
+
+
 export default groupRoutes;
