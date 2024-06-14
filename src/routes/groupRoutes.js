@@ -481,7 +481,7 @@ groupRoutes.get('/:group_id/budget', validateGetGroupMembers, async (req, res) =
 });
 
 groupRoutes.get('/:group_id/firebase_token', validateGetGroupMembers, async (req, res) => {
-    const { group_id } = req.params
+    const { group_id } = req.params;
 
     const group = await Group.findOne({ where: { id: group_id } });
     if (!group) {
@@ -490,15 +490,17 @@ groupRoutes.get('/:group_id/firebase_token', validateGetGroupMembers, async (req
 
     const group_members = await GroupMember.findAll({
         where: { group_id },
-        attributes: [], // Only select the 'pending' field from GroupMember
         include: [{
             model: User,
             as: 'user',
-            attributes: ['username', 'email', 'firebase_token'] // Only select 'id', 'username', 'email' from User
+            attributes: ['firebase_token'] // Only select 'firebase_token' from User
         }]
     });
-    
-    return res.status(200).json(group_members);
+
+    // Map over group_members to extract just the firebase_token
+    const firebase_tokens = group_members.map(member => member.user.firebase_token);
+
+    return res.status(200).json(firebase_tokens);
 
 });
 
