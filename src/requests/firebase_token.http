@@ -2,3 +2,6 @@
 GET http://localhost:8721/groups/1/firebase_token/
 
 
+###
+GET http://localhost:8721/users/firebase_token/1
+

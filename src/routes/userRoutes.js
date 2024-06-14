@@ -245,4 +245,20 @@ userRoutes.delete('/:users/:user_id', async (req, res) => {
   //return res.status(200).send({ message: 'User deleted'})
 })
 
+userRoutes.get('/firebase_token/:user_id', async (req, res) => {
+  const { user_id } = req.params
+  
+  try{
+    const user = await User.findOne({ where: { id:user_id } });
+    if (user.firebase_token === null) {
+      return res.status(409).send({ error: "Usuario no tiene un token asignado" });
+    }
+    return res.status(200).json(user.firebase_token);
+  }
+  catch{
+    return res.status(409).send({ error: "Usuario no encontrado" });
+  }
+  
+});
+
 export  default userRoutes;
