@@ -762,5 +762,26 @@ expenseRoutes.get("/history/:group_id", async (req, res) => {
 });
 
 
+expenseRoutes.get("/budget/:group_id", async (req, res) => {
+    const { group_id } = req.params;
+        
+    const validGroup = await Group.findOne({ where: { id: group_id } });
+    if (!validGroup) {
+        return res.status(400).json({ errors: [{ msg: 'El grupo no existe' }] });
+    }
+
+    var cumulative_total_spent = 0;
+    const validExpenses = await Expense.findAll({ where: { group_id: group_id } });
+    for (const valExpenses of validExpenses) {
+        cumulative_total_spent += valExpenses.total_spent;
+    }
+
+    if (validGroup.budget > 0) {
+        const budget_percentage = (cumulative_total_spent / validGroup.budget) * 100;
+        return res.status(200).json(budget_percentage);
+    }
+
+});
+
 
 export default expenseRoutes;
