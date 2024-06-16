@@ -168,6 +168,8 @@ expenseRoutes.post('/:group_id', validateNewExpense, async (req, res) => {
         spent += participant.spent;
         paid += participant.paid;
     }
+    spent = Math.round(spent);
+    console.log("spent",spent);
 
     if (spent !== total_spent || paid !== total_spent) {
         return res.status(400).json({ errors: [{ msg: 'El total gastado y el total pagado tienen que ser iguales a la suma de los gastos individuales' }] });
